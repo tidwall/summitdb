@@ -9,6 +9,9 @@ import (
 )
 
 func subTestStrings(t *testing.T, mc *mockCluster) {
+	runStep(t, mc, "BITPOS test", strings_BITPOS_test)
+	runStep(t, mc, "SETBIT test", strings_SETBIT_test)
+	runStep(t, mc, "GETBIT test", strings_GETBIT_test)
 	runStep(t, mc, "BITCOUNT test", strings_BITCOUNT_test)
 	runStep(t, mc, "BITOP test", strings_BITOP_test)
 	runStep(t, mc, "GETRANGE test", strings_GETRANGE_test)
@@ -109,6 +112,37 @@ func strings_APPEND_test(mc *mockCluster) error {
 	})
 }
 
+func strings_GETBIT_test(mc *mockCluster) error {
+	return mc.DoBatch([][]interface{}{
+		{"SETBIT", "mykey", 7, 1}, {0},
+		{"GETBIT", "mykey", 0}, {0},
+		{"GETBIT", "mykey", 7}, {1},
+		{"GETBIT", "mykey", 100}, {0},
+		{"DEL", "mykey"}, {1},
+	})
+}
+
+func strings_SETBIT_test(mc *mockCluster) error {
+	return mc.DoBatch([][]interface{}{
+		{"SETBIT", "mykey", 7, 1}, {0},
+		{"SETBIT", "mykey", 7, 0}, {1},
+		{"GET", "mykey"}, {"\u0000"},
+		{"DEL", "mykey"}, {1},
+	})
+}
+
+func strings_BITPOS_test(mc *mockCluster) error {
+	return mc.DoBatch([][]interface{}{
+		{"SET", "mykey", "\xff\xf0\x00"}, {"OK"},
+		{"BITPOS", "mykey", 0}, {12},
+		{"SET", "mykey", "\x00\xff\xf0"}, {"OK"},
+		{"BITPOS", "mykey", 1, 0}, {8},
+		{"BITPOS", "mykey", 1, 2}, {16},
+		{"SET", "mykey", "\x00\x00\x00"}, {"OK"},
+		{"BITPOS", "mykey", 1}, {-1},
+		{"DEL", "mykey"}, {1},
+	})
+}
 func strings_INCR_test(mc *mockCluster) error {
 	resp, err := redis.Int(mc.Do("INCR", "__key__:incr"))
 	if err != nil {

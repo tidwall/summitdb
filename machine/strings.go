@@ -773,17 +773,17 @@ func (m *Machine) doBitpos(a finn.Applier, conn redcon.Conn, cmd redcon.Command,
 		start, end = reevalStartEnd(start, end, val)
 		val = val[start:end]
 		var pos int
-	loop:
 		for i := 0; i < len(val); i++ {
 			c := val[i]
 			for j := 0; j < 8; j++ {
 				if uint64(c>>uint(8-j-1)&1) == bit {
-					break loop
+					conn.WriteInt(start*8 + pos)
+					return nil
 				}
 				pos++
 			}
 		}
-		conn.WriteInt(start*8 + pos)
+		conn.WriteInt(-1)
 		return nil
 	})
 }
