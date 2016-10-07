@@ -2,6 +2,9 @@ package machine
 
 import (
 	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
 	"testing"
 )
 
@@ -22,6 +25,14 @@ const (
 func TestAll(t *testing.T) {
 	mockCleanup()
 	defer mockCleanup()
+
+	ch := make(chan os.Signal)
+	signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-ch
+		mockCleanup()
+		os.Exit(1)
+	}()
 
 	mc, err := mockOpenCluster(3)
 	if err != nil {

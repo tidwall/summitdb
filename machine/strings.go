@@ -62,7 +62,9 @@ func (m *Machine) doSet(a finn.Applier, conn redcon.Conn, cmd redcon.Command, tx
 		return nil, errKeyNotAllowed
 	}
 
-	if len(cmd.Args) == 3 {
+	commandName := qcmdlower(cmd.Args[0])
+
+	if len(cmd.Args) == 3 && commandName == "set" {
 		// fasttrack
 		return m.writeDoApply(a, conn, cmd, tx, func(tx *buntdb.Tx) (interface{}, error) {
 			_, _, err := tx.Set(string(cmd.Args[1]), string(cmd.Args[2]), nil)
@@ -72,11 +74,10 @@ func (m *Machine) doSet(a finn.Applier, conn redcon.Conn, cmd redcon.Command, tx
 			return nil
 		})
 	}
-
 	var key, val string
 	var px, nx, xx bool
 	var pxi int
-	switch qcmdlower(cmd.Args[0]) {
+	switch commandName {
 	default:
 		return nil, finn.ErrUnknownCommand
 	case "set":
@@ -119,6 +120,7 @@ func (m *Machine) doSet(a finn.Applier, conn redcon.Conn, cmd redcon.Command, tx
 		}
 	case "setex", "psetex":
 		key = string(cmd.Args[1])
+		val = string(cmd.Args[3])
 		n, err := strconv.ParseInt(string(cmd.Args[2]), 10, 64)
 		if err != nil {
 			return nil, errNotAnInt
@@ -204,6 +206,7 @@ func (m *Machine) doMset(a finn.Applier, conn redcon.Conn, cmd redcon.Command, t
 }
 
 func (m *Machine) doMsetnx(a finn.Applier, conn redcon.Conn, cmd redcon.Command, tx *buntdb.Tx) (interface{}, error) {
+	// MSETNX key value [key value ...]
 	if len(cmd.Args) < 3 || (len(cmd.Args)-1)%2 == 1 {
 		return nil, finn.ErrWrongNumberOfArguments
 	}
@@ -235,6 +238,7 @@ func (m *Machine) doMsetnx(a finn.Applier, conn redcon.Conn, cmd redcon.Command,
 }
 
 func (m *Machine) doMget(a finn.Applier, conn redcon.Conn, cmd redcon.Command, tx *buntdb.Tx) (interface{}, error) {
+	// MGET key [key ...]
 	if len(cmd.Args) < 2 {
 		return nil, finn.ErrWrongNumberOfArguments
 	}
@@ -271,6 +275,7 @@ func (m *Machine) doMget(a finn.Applier, conn redcon.Conn, cmd redcon.Command, t
 	})
 }
 func (m *Machine) doAppend(a finn.Applier, conn redcon.Conn, cmd redcon.Command, tx *buntdb.Tx) (interface{}, error) {
+	// APPEND key value
 	if len(cmd.Args) != 3 {
 		return nil, finn.ErrWrongNumberOfArguments
 	}
