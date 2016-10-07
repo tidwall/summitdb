@@ -182,6 +182,31 @@ func (mc *mockCluster) Do(commandName string, args ...interface{}) (interface{},
 		return resp, err
 	}
 }
+func (mc *mockCluster) DoBatch(commands [][]interface{}) error {
+	for i := 0; i < len(commands); i += 2 {
+		cmds := commands[i]
+		if err := mc.DoExpect(commands[i+1][0], cmds[0].(string), cmds[1:]...); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+func (mc *mockCluster) DoExpect(expect interface{}, commandName string, args ...interface{}) error {
+	resp, err := mc.Do(commandName, args...)
+	if err != nil {
+		return err
+	}
+	if expect == nil && resp != nil {
+		return fmt.Errorf("expected '%v', got '%v'", expect, resp)
+	}
+	if b, ok := resp.([]uint8); ok {
+		resp = string([]byte(b))
+	}
+	if fmt.Sprintf("%v", resp) != fmt.Sprintf("%v", expect) {
+		return fmt.Errorf("expected '%v', got '%v'", expect, resp)
+	}
+	return nil
+}
 
 func (mc *mockCluster) Close() {
 	for _, s := range mc.ss {
