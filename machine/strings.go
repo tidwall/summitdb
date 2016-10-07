@@ -12,6 +12,7 @@ import (
 )
 
 func (m *Machine) doGet(a finn.Applier, conn redcon.Conn, cmd redcon.Command, tx *buntdb.Tx) (interface{}, error) {
+	// GET key
 	if len(cmd.Args) != 2 {
 		return nil, finn.ErrWrongNumberOfArguments
 	}
@@ -33,6 +34,7 @@ func (m *Machine) doGet(a finn.Applier, conn redcon.Conn, cmd redcon.Command, tx
 }
 
 func (m *Machine) doStrlen(a finn.Applier, conn redcon.Conn, cmd redcon.Command, tx *buntdb.Tx) (interface{}, error) {
+	// STRLEN key
 	if len(cmd.Args) != 2 {
 		return nil, finn.ErrWrongNumberOfArguments
 	}
