@@ -39,28 +39,28 @@ func isMercMetaKey(key string) bool {
 }
 
 // pipelineCommand creates a single command from a pipeline.
-func pipelineCommand(conn redcon.Conn, cmd redcon.Command) (redcon.Command, error) {
+func pipelineCommand(conn redcon.Conn, cmd redcon.Command) (int, redcon.Command, error) {
 	if conn == nil {
-		return cmd, nil
+		return 0, cmd, nil
 	}
 	pcmds := conn.PeekPipeline()
 	if len(pcmds) == 0 {
-		return cmd, nil
+		return 0, cmd, nil
 	}
 	args := make([][]byte, 0, 64)
 	switch qcmdlower(cmd.Args[0]) {
 	default:
-		return cmd, nil
+		return 0, cmd, nil
 	case "plget", "plset":
-		return redcon.Command{}, finn.ErrUnknownCommand
+		return 0, redcon.Command{}, finn.ErrUnknownCommand
 	case "get":
 		if len(cmd.Args) != 2 {
-			return cmd, nil
+			return 0, cmd, nil
 		}
 		// convert to an PLGET command which similar to an MGET
 		for _, pcmd := range pcmds {
 			if qcmdlower(pcmd.Args[0]) != "get" || len(pcmd.Args) != 2 {
-				return cmd, nil
+				return 0, cmd, nil
 			}
 		}
 		args = append(args, []byte("plget"))
@@ -69,12 +69,12 @@ func pipelineCommand(conn redcon.Conn, cmd redcon.Command) (redcon.Command, erro
 		}
 	case "set":
 		if len(cmd.Args) != 3 {
-			return cmd, nil
+			return 0, cmd, nil
 		}
 		// convert to a PLSET command which is similar to an MSET
 		for _, pcmd := range pcmds {
 			if qcmdlower(pcmd.Args[0]) != "set" || len(pcmd.Args) != 3 {
-				return cmd, nil
+				return 0, cmd, nil
 			}
 		}
 		args = append(args, []byte("plset"))
@@ -87,7 +87,7 @@ func pipelineCommand(conn redcon.Conn, cmd redcon.Command) (redcon.Command, erro
 	conn.ReadPipeline()
 
 	ncmd := buildCommand(args)
-	return ncmd, nil
+	return len(pcmds) + 1, ncmd, nil
 }
 
 func buildCommand(args [][]byte) redcon.Command {

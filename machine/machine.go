@@ -162,6 +162,17 @@ func scriptNotAllowedCommand(cmd string) bool {
 	return false
 }
 
+func respPipeline(conn redcon.Conn, pn int, err error) (interface{}, error) {
+	if err != nil {
+		if conn != nil {
+			for i := 0; i < pn-1; i++ {
+				conn.WriteError(err.Error())
+			}
+		}
+	}
+	return nil, err
+}
+
 // Command processes a command through the Raft pipeline.
 func (m *Machine) Command(a finn.Applier, conn redcon.Conn, cmd redcon.Command) (interface{}, error) {
 	if conn != nil {
@@ -185,9 +196,10 @@ func (m *Machine) Command(a finn.Applier, conn redcon.Conn, cmd redcon.Command) 
 		}
 	}
 
+	var pn int
 	var err error
 	// try to pipeline the command first.
-	cmd, err = pipelineCommand(conn, cmd)
+	pn, cmd, err = pipelineCommand(conn, cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -196,10 +208,12 @@ func (m *Machine) Command(a finn.Applier, conn redcon.Conn, cmd redcon.Command) 
 		return m.doTransactableCommand(a, conn, cmd, nil)
 	case "plget":
 		// PLGET key [key ...]
-		return m.doMget(a, conn, cmd, nil)
+		_, err := m.doMget(a, conn, cmd, nil)
+		return respPipeline(conn, pn, err)
 	case "plset":
 		// PLSET key value [key value ...]
-		return m.doMset(a, conn, cmd, nil)
+		_, err := m.doMset(a, conn, cmd, nil)
+		return respPipeline(conn, pn, err)
 	case "plwmulti", "plrmulti":
 		// PLWMULTI cmd [cmd ...]
 		// PLRMULTI cmd [cmd ...]
@@ -305,7 +319,7 @@ func (m *Machine) doScriptableCommand(a finn.Applier, conn redcon.Conn, cmd redc
 	case "strlen":
 		// STRLEN key
 		return m.doStrlen(a, conn, cmd, tx)
-	case "keys", "iter", "iterate":
+	case "keys", "iter":
 		// KEYS pattern [PIVOT value] [LIMIT limit] [DESC|ASC] [WITHVALUES]
 		// ITER index [PIVOT value] [LIMIT limit] [DESC|ASC] [RANGE min max] [MATCH pattern]
 		return m.doIter(a, conn, cmd, tx)

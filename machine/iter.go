@@ -331,6 +331,7 @@ func (m *Machine) iterateKeys(rargs *iterArgs, conn redcon.Conn, tx *buntdb.Tx) 
 		return nil, nil
 	}
 	var forever bool
+	var pastpivot bool
 	var min, max string
 	if rargs.pattern[0] != '*' {
 		min, max = match.Allowable(rargs.pattern)
@@ -375,8 +376,11 @@ func (m *Machine) iterateKeys(rargs *iterArgs, conn redcon.Conn, tx *buntdb.Tx) 
 				if !forever && key < min {
 					return false
 				}
-				if forever && rargs.pivoton && key >= rargs.pivot {
-					return true // just skip this one
+				if !pastpivot {
+					if rargs.pivoton && key >= rargs.pivot {
+						return true // just skip this one
+					}
+					pastpivot = true
 				}
 				if match.Match(key, rargs.pattern) {
 					results = append(results, key)
@@ -401,8 +405,11 @@ func (m *Machine) iterateKeys(rargs *iterArgs, conn redcon.Conn, tx *buntdb.Tx) 
 			if !forever && key > max {
 				return false
 			}
-			if forever && rargs.pivoton && key <= rargs.pivot {
-				return true // just skip this one
+			if !pastpivot {
+				if rargs.pivoton && key <= rargs.pivot {
+					return true
+				}
+				pastpivot = true
 			}
 			if match.Match(key, rargs.pattern) {
 				results = append(results, key)

@@ -94,6 +94,7 @@ outer:
 					args = args[1:]
 				}
 			}
+			rargs.Indexes = append(rargs.Indexes, idx)
 			break outer
 		case "json":
 			args = args[1:]
@@ -301,16 +302,21 @@ func (m *Machine) doIndexes(a finn.Applier, conn redcon.Conn, cmd redcon.Command
 			if !match.Match(name, pattern) {
 				continue
 			}
-			idx := indexes[name]
+			oidx := indexes[name]
 			conn.WriteBulkString(name)
 			if details {
-				conn.WriteBulkString(idx.Pattern)
-				conn.WriteArray(len(idx.Indexes))
-				for _, idx := range idx.Indexes {
+				conn.WriteBulkString(oidx.Pattern)
+				conn.WriteArray(len(oidx.Indexes))
+				for _, idx := range oidx.Indexes {
 					var parts []string
 					parts = append(parts, idx.Kind)
 					if idx.Kind == "json" {
 						parts = append(parts, idx.Path)
+					}
+					if idx.Kind == "spatial" {
+						if oidx.SpatialPath != "" {
+							parts = append(parts, "path", oidx.SpatialPath)
+						}
 					}
 					if idx.CollateOn {
 						parts = append(parts, "collate", idx.Collate)

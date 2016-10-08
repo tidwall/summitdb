@@ -124,7 +124,7 @@ func (m *Machine) doRect(a finn.Applier, conn redcon.Conn, cmd redcon.Command, t
 	return m.readDoApply(a, conn, cmd, tx, func(tx *buntdb.Tx) error {
 		var results []rectItem
 		var skipcount int
-		limit := rargs.limit * 2
+		limit := rargs.limit
 		err := tx.Intersects(rargs.index, rargs.value,
 			func(key, val string) bool {
 				if isMercMetaKey(key) {

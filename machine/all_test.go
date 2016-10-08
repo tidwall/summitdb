@@ -40,7 +40,10 @@ func TestAll(t *testing.T) {
 	}
 	defer mc.Close()
 	runSubTest(t, "strings", mc, subTestStrings)
+	runSubTest(t, "keys", mc, subTestKeys)
 	runSubTest(t, "indexes", mc, subTestIndexes)
+	runSubTest(t, "transactions", mc, subTestTransactions)
+	//runSubTest(t, "raft", mc, subTestRaft)
 }
 
 func runSubTest(t *testing.T, name string, mc *mockCluster, test func(t *testing.T, mc *mockCluster)) {
@@ -51,7 +54,19 @@ func runSubTest(t *testing.T, name string, mc *mockCluster, test func(t *testing
 }
 
 func runStep(t *testing.T, mc *mockCluster, name string, step func(mc *mockCluster) error) {
-	if err := step(mc); err != nil {
+	if err := func() error {
+		// reset the current server
+		mc.ResetConn()
+		defer mc.ResetConn()
+		// clear the database so the test is consistent
+		if err := mc.DoBatch([][]interface{}{{"FLUSHDB"}, {"OK"}}); err != nil {
+			return err
+		}
+		if err := step(mc); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
 		fmt.Printf("["+red+"fail"+clear+"]: %s\n", name)
 		t.Fatal(err)
 	}
