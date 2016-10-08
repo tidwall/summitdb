@@ -199,6 +199,17 @@ func (mc *mockCluster) DoExpect(expect interface{}, commandName string, args ...
 	if expect == nil && resp != nil {
 		return fmt.Errorf("expected '%v', got '%v'", expect, resp)
 	}
+	if b, ok := resp.([]interface{}); ok {
+		var ss []string
+		for _, v := range b {
+			if v, ok := v.([]uint8); ok {
+				ss = append(ss, string(v))
+			} else {
+				ss = append(ss, fmt.Sprintf("%v", v))
+			}
+		}
+		resp = ss
+	}
 	if b, ok := resp.([]uint8); ok {
 		resp = string([]byte(b))
 	}

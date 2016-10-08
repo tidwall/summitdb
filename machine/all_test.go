@@ -40,6 +40,7 @@ func TestAll(t *testing.T) {
 	}
 	defer mc.Close()
 	runSubTest(t, "strings", mc, subTestStrings)
+	runSubTest(t, "indexes", mc, subTestIndexes)
 }
 
 func runSubTest(t *testing.T, name string, mc *mockCluster, test func(t *testing.T, mc *mockCluster)) {

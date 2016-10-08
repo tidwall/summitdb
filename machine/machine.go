@@ -309,10 +309,9 @@ func (m *Machine) doScriptableCommand(a finn.Applier, conn redcon.Conn, cmd redc
 		// KEYS pattern [PIVOT value] [LIMIT limit] [DESC|ASC] [WITHVALUES]
 		// ITER index [PIVOT value] [LIMIT limit] [DESC|ASC] [RANGE min max] [MATCH pattern]
 		return m.doIter(a, conn, cmd, tx)
-	case "intersects", "within":
-		// INTERSECTS index bounds [MATCH pattern] [SKIP skip] [LIMIT limit]
-		// WITHIN index bounds [MATCH pattern] [SKIP skip] [LIMIT limit]
-		return m.doRectSearch(a, conn, cmd, tx)
+	case "rect":
+		// RECT index bounds [MATCH pattern] [SKIP skip] [LIMIT limit]
+		return m.doRect(a, conn, cmd, tx)
 	case "setindex":
 		// SETINDEX name pattern SPATIAL [PATH path]
 		// SETINDEX name pattern TEXT [COLLATE collate] [ASC|DESC]

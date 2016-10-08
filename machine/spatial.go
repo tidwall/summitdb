@@ -1,6 +1,7 @@
 package machine
 
 import (
+	"sort"
 	"strconv"
 	"strings"
 
@@ -36,10 +37,12 @@ func parseRectSearchArgs(bargs [][]byte) (
 	default:
 		err = errSyntaxError
 		return
-	case "within":
-		rargs.within = true
-		fallthrough
-	case "intersects":
+		/*
+			case "within":
+				rargs.within = true
+				fallthrough
+		*/
+	case "rect":
 		if len(args) < 3 {
 			err = finn.ErrWrongNumberOfArguments
 			return
@@ -94,15 +97,32 @@ func parseRectSearchArgs(bargs [][]byte) (
 	return
 }
 
-// doRectSearch searches for intersecting rectangles on spatial indexes.
-func (m *Machine) doRectSearch(a finn.Applier, conn redcon.Conn, cmd redcon.Command, tx *buntdb.Tx) (interface{}, error) {
-	// INTERSECTS index bounds [MATCH pattern] [LIMIT limit] [SKIP skip]
+type rectItem struct {
+	key, val string
+}
+type rectItemByKey []rectItem
+
+func (a rectItemByKey) Len() int {
+	return len(a)
+}
+
+func (a rectItemByKey) Less(j, k int) bool {
+	return a[j].key < a[k].key
+}
+
+func (a rectItemByKey) Swap(j, k int) {
+	a[j], a[k] = a[k], a[j]
+}
+
+// doRect searches for intersecting rectangles on spatial indexes.
+func (m *Machine) doRect(a finn.Applier, conn redcon.Conn, cmd redcon.Command, tx *buntdb.Tx) (interface{}, error) {
+	// RECT index bounds [MATCH pattern] [LIMIT limit] [SKIP skip]
 	rargs, err := parseRectSearchArgs(cmd.Args)
 	if err != nil {
 		return nil, err
 	}
 	return m.readDoApply(a, conn, cmd, tx, func(tx *buntdb.Tx) error {
-		var results []string
+		var results []rectItem
 		var skipcount int
 		limit := rargs.limit * 2
 		err := tx.Intersects(rargs.index, rargs.value,
@@ -121,16 +141,18 @@ func (m *Machine) doRectSearch(a finn.Applier, conn redcon.Conn, cmd redcon.Comm
 					skipcount++
 					return true
 				}
-				results = append(results, key, val)
+				results = append(results, rectItem{key, val})
 				return true
 			},
 		)
 		if err != nil {
 			return err
 		}
-		conn.WriteArray(len(results))
+		sort.Sort(rectItemByKey(results))
+		conn.WriteArray(len(results) * 2)
 		for _, result := range results {
-			conn.WriteBulkString(result)
+			conn.WriteBulkString(result.key)
+			conn.WriteBulkString(result.val)
 		}
 		return nil
 	})
