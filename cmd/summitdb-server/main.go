@@ -13,6 +13,8 @@ import (
 	"github.com/tidwall/summitdb/machine"
 )
 
+var version = "0.0.1"
+
 func main() {
 	var port int
 	var durability string
@@ -91,6 +93,8 @@ func main() {
 
 	// set the log level
 	log.SetLevel(int(opts.LogLevel))
+
+	log.Printf("SummitDB %s", version)
 
 	// create the new machine
 	m, err := machine.New(log.Sub('M'), addr)
