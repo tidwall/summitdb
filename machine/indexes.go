@@ -18,6 +18,7 @@ const indexKeyPrefix = sdbMetaPrefix + "index:"
 type indexArgsIndex struct {
 	Kind      string `json:"kind,omitempty"`
 	Path      string `json:"path,omitempty"`
+	CS        bool   `json:"cs,omitempty"`
 	CollateOn bool   `json:"collate_on,omitempty"`
 	Collate   string `json:"collate,omitempty"`
 	Desc      bool   `json:"desc,omitempty"`
@@ -45,6 +46,7 @@ func (iargs indexArgs) Equals(rargs indexArgs) bool {
 		ridx := rargs.Indexes[i]
 		if iidx.Kind != ridx.Kind ||
 			iidx.Path != ridx.Path ||
+			iidx.CS != ridx.CS ||
 			iidx.CollateOn != ridx.CollateOn ||
 			iidx.Collate != ridx.Collate ||
 			iidx.Desc != ridx.Desc {
@@ -111,6 +113,11 @@ outer:
 				switch strings.ToLower(string(args[0])) {
 				default:
 					break loop
+				case "cs":
+					if idx.Kind != "json" {
+						break loop
+					}
+					idx.CS = true
 				case "collate":
 					if idx.Kind != "text" && idx.Kind != "json" {
 						break loop
@@ -175,6 +182,8 @@ func dbSetIndex(tx *buntdb.Tx, rargs indexArgs) error {
 			case "json":
 				if idx.CollateOn {
 					lesser = collate.IndexJSON(idx.Collate, idx.Path)
+				} else if idx.CS {
+					lesser = buntdb.IndexJSONCaseSensitive(idx.Path)
 				} else {
 					lesser = buntdb.IndexJSON(idx.Path)
 				}
@@ -312,6 +321,9 @@ func (m *Machine) doIndexes(a finn.Applier, conn redcon.Conn, cmd redcon.Command
 					parts = append(parts, idx.Kind)
 					if idx.Kind == "json" {
 						parts = append(parts, idx.Path)
+						if idx.CS {
+							parts = append(parts, "cs")
+						}
 					}
 					if idx.Kind == "spatial" {
 						if oidx.SpatialPath != "" {

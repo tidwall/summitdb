@@ -525,7 +525,12 @@ func (n *Node) doRaftLeader(conn redcon.Conn, cmd redcon.Command) (interface{}, 
 	if len(cmd.Args) != 1 {
 		return nil, ErrWrongNumberOfArguments
 	}
-	conn.WriteBulkString(n.raft.Leader())
+	leader := n.raft.Leader()
+	if leader == "" {
+		conn.WriteNull()
+	} else {
+		conn.WriteBulkString(leader)
+	}
 	return nil, nil
 }
 
