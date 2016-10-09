@@ -91,7 +91,7 @@ func (m *Machine) readDoApply(
 func flushAllButMeta(tx *buntdb.Tx) ([]string, int, error) {
 	// backup the meta keys
 	var metas []string
-	if err := tx.AscendGreaterOrEqual("", mercMetaPrefix, func(key, val string) bool {
+	if err := tx.AscendGreaterOrEqual("", sdbMetaPrefix, func(key, val string) bool {
 		if !isMercMetaKey(key) {
 			return false
 		}

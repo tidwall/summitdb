@@ -13,7 +13,7 @@ import (
 	"github.com/tidwall/redcon"
 )
 
-const indexKeyPrefix = mercMetaPrefix + "index:"
+const indexKeyPrefix = sdbMetaPrefix + "index:"
 
 type indexArgsIndex struct {
 	Kind      string `json:"kind,omitempty"`

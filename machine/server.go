@@ -34,8 +34,8 @@ func (m *Machine) doDbsize(a finn.Applier, conn redcon.Conn, cmd redcon.Command,
 		if err != nil {
 			return err
 		}
-		if err := tx.AscendGreaterOrEqual("", mercMetaPrefix, func(key, val string) bool {
-			if !strings.HasPrefix(key, mercMetaPrefix) {
+		if err := tx.AscendGreaterOrEqual("", sdbMetaPrefix, func(key, val string) bool {
+			if !strings.HasPrefix(key, sdbMetaPrefix) {
 				return false
 			}
 			n--

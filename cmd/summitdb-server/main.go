@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"github.com/tidwall/finn"
-	"github.com/tidwall/merc/machine"
 	"github.com/tidwall/redcon"
 	"github.com/tidwall/redlog"
+	"github.com/tidwall/summitdb/machine"
 )
 
 func main() {

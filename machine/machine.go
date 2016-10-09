@@ -114,7 +114,7 @@ func (m *Machine) ConnClosed(conn redcon.Conn, err error) {
 }
 
 func (m *Machine) reopenBlankDB(rd io.Reader) error {
-	dir, err := ioutil.TempDir("", "merc")
+	dir, err := ioutil.TempDir("", "summitdb")
 	if err != nil {
 		return err
 	}

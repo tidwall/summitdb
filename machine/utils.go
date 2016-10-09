@@ -12,12 +12,12 @@ import (
 )
 
 // This is a fixed value. It should never ever ever be changed"
-const mercMetaPrefix = "!141259cdc892c099cfa01ecabd8375362b6aa09d!"
+const sdbMetaPrefix = "!141259cdc892c099cfa01ecabd8375362b6aa09d!"
 
 func isMercMetaKeyBytes(key []byte) bool {
-	if len(key) >= len(mercMetaPrefix) {
-		for i := 0; i < len(mercMetaPrefix); i++ {
-			if key[i] != mercMetaPrefix[i] {
+	if len(key) >= len(sdbMetaPrefix) {
+		for i := 0; i < len(sdbMetaPrefix); i++ {
+			if key[i] != sdbMetaPrefix[i] {
 				return false
 			}
 		}
@@ -27,9 +27,9 @@ func isMercMetaKeyBytes(key []byte) bool {
 }
 
 func isMercMetaKey(key string) bool {
-	if len(key) >= len(mercMetaPrefix) {
-		for i := 0; i < len(mercMetaPrefix); i++ {
-			if key[i] != mercMetaPrefix[i] {
+	if len(key) >= len(sdbMetaPrefix) {
+		for i := 0; i < len(sdbMetaPrefix); i++ {
+			if key[i] != sdbMetaPrefix[i] {
 				return false
 			}
 		}

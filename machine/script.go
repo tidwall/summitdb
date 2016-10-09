@@ -18,7 +18,7 @@ import (
 )
 
 const scriptErrPrefix = "eval err:"
-const scriptKeyPrefix = mercMetaPrefix + "script:"
+const scriptKeyPrefix = sdbMetaPrefix + "script:"
 
 // scriptMachine represents a global javascript VM and
 // contains all of the runContexts.
@@ -36,7 +36,7 @@ func newScriptMachine(m *Machine) (*scriptMachine, error) {
 	sm.runCtxs = make(map[string]*runContext)
 
 	_, err := sm.vm.Run(`
-			var Merc = (function(){
+			var SummitDB = (function(){
 				var ErrorReply = function(err){
 					this.err = err;
 				}
@@ -49,26 +49,26 @@ func newScriptMachine(m *Machine) (*scriptMachine, error) {
 				StatusReply.prototype.toString = function(){
 					return this.ok.toString();
 				}
-				var Merc = function(sha, runid){
+				var SummitDB = function(sha, runid){
 					this.sha = sha;
 					this.runid = runid;
 				}
-				Merc.prototype.errorReply = function(err){
+				SummitDB.prototype.errorReply = function(err){
 					return new ErrorReply(err);
 				}
-				Merc.prototype.statusReply = function(ok){
+				SummitDB.prototype.statusReply = function(ok){
 					return new StatusReply(ok);
 				}
-				Merc.prototype.toString = function(){
-					return "[object Merc]";
+				SummitDB.prototype.toString = function(){
+					return "[object SummitDB]";
 				}
-				return Merc;
+				return SummitDB;
 			}())
 		`)
 	if err != nil {
 		return nil, err
 	}
-	v, err := sm.vm.Get("Merc")
+	v, err := sm.vm.Get("SummitDB")
 	if err != nil {
 		return nil, err
 	}
@@ -77,8 +77,8 @@ func newScriptMachine(m *Machine) (*scriptMachine, error) {
 		return nil, err
 	}
 	proto := v.Object()
-	mercCall := func(name string, call otto.FunctionCall) otto.Value {
-		v, err := call.Otto.Get("merc")
+	sdbCall := func(name string, call otto.FunctionCall) otto.Value {
+		v, err := call.Otto.Get("sdb")
 		if err != nil {
 			panic(scriptErrPrefix + err.Error())
 		}
@@ -99,7 +99,7 @@ func newScriptMachine(m *Machine) (*scriptMachine, error) {
 			if name == "call" {
 				panic(scriptErrPrefix + err.Error())
 			}
-			val, err := call.Otto.Call(`merc.errorReply`, nil, err.Error())
+			val, err := call.Otto.Call(`sdb.errorReply`, nil, err.Error())
 			if err != nil {
 				panic(scriptErrPrefix + err.Error())
 			}
@@ -108,12 +108,12 @@ func newScriptMachine(m *Machine) (*scriptMachine, error) {
 		return jsValue(ctx.conn, call.Otto)
 	}
 	if err := proto.Set("call", func(call otto.FunctionCall) otto.Value {
-		return mercCall("call", call)
+		return sdbCall("call", call)
 	}); err != nil {
 		return nil, err
 	}
 	if err := proto.Set("pcall", func(call otto.FunctionCall) otto.Value {
-		return mercCall("pcall", call)
+		return sdbCall("pcall", call)
 	}); err != nil {
 		return nil, err
 	}
@@ -217,13 +217,13 @@ func jsValue(conn *passiveConn, vm *otto.Otto) otto.Value {
 	var val otto.Value
 	switch v := resp.(type) {
 	case string:
-		val, _ = vm.Call("merc.statusReply", nil, v)
+		val, _ = vm.Call("sdb.statusReply", nil, v)
 	case int64:
 		val, _ = vm.ToValue(v)
 	case []byte:
 		val, _ = vm.ToValue(string(v))
 	case error:
-		val, _ = vm.Call("merc.errorReply", nil, v)
+		val, _ = vm.Call("sdb.errorReply", nil, v)
 	case []int:
 		n := v[0]
 		o, _ := vm.Object(`([])`)
@@ -431,7 +431,7 @@ func (m *Machine) doEval(a finn.Applier, conn redcon.Conn, cmd redcon.Command, t
 			}()
 			vm.Set("KEYS", keys)
 			vm.Set("ARGV", argv)
-			vm.Run(`var merc = new Merc('` + sha + `','` + run + `')`)
+			vm.Run(`var sdb = new SummitDB('` + sha + `','` + run + `')`)
 			v, err = vm.Run(`(function(){` + script + `})();`)
 		}()
 		return v, err
