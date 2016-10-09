@@ -43,7 +43,8 @@ func TestAll(t *testing.T) {
 	runSubTest(t, "keys", mc, subTestKeys)
 	runSubTest(t, "indexes", mc, subTestIndexes)
 	runSubTest(t, "transactions", mc, subTestTransactions)
-	//runSubTest(t, "raft", mc, subTestRaft)
+	runSubTest(t, "scripts", mc, subTestScripts)
+	runSubTest(t, "raft", mc, subTestRaft)
 }
 
 func runSubTest(t *testing.T, name string, mc *mockCluster, test func(t *testing.T, mc *mockCluster)) {

@@ -87,7 +87,6 @@ func raft_JOIN_test(mc *mockCluster) error {
 	if err := raftWaitForNumPeers(mc, 3); err != nil {
 		return err
 	}
-	time.Sleep(time.Minute * 10)
 	return nil
 }
 
@@ -110,7 +109,6 @@ func raft_REMOVE_test(mc *mockCluster) error {
 	if err := raftWaitForNumPeers(mc, 2); err != nil {
 		return err
 	}
-	time.Sleep(time.Second * 10000)
 	return nil
 
 }

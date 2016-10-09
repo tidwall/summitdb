@@ -156,7 +156,8 @@ func keys_KEYS_iterate(mc *mockCluster) error {
 		{"KEYS", "*", "PIVOT", "key1", "LIMIT", 6}, {"[key2 key3 key4 key5 key6 key7]"},
 		{"KEYS", "*", "PIVOT", "key8", "LIMIT", 6, "DESC"}, {"[key7 key6 key5 key4 key3 key2]"},
 		{"KEYS", "*2", "PIVOT", "key1"}, {"[key2]"},
-		{"KEYS", "k*", "PIVOT", "key1"}, {"[key2 key3 key4 key5 key6 key7 key8]"},
+		{"KEYS", "*2", "PIVOT", "key1", "WITHVALUES"}, {"[key2 3]"},
+		{"KEYS", "k*", "PIVOT", "key1", "ASC"}, {"[key2 key3 key4 key5 key6 key7 key8]"},
 		{"KEYS", "k*", "PIVOT", "key8", "DESC"}, {"[key7 key6 key5 key4 key3 key2 key1]"},
 
 		{"KEYS"}, {"ERR wrong number of arguments for 'KEYS' command"},

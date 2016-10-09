@@ -11,7 +11,6 @@ func subTestIndexes(t *testing.T, mc *mockCluster) {
 	runStep(t, mc, "json", indexes_SETINDEX_json)
 	runStep(t, mc, "spatial", indexes_SETINDEX_spatial)
 	runStep(t, mc, "spatial path", indexes_SETINDEX_spatialPath)
-
 }
 
 func indexes_SETINDEX_text(mc *mockCluster) error {
@@ -48,6 +47,9 @@ func indexes_SETINDEX_ints(mc *mockCluster) error {
 		{"ITER", "myindex"}, {"[key4 1 key1 2 key7 2 key2 3 key6 5 key3 7 key5 9 key8 12]"},
 		{"SETINDEX", "myindex", "*", "INT", "DESC"}, {"OK"},
 		{"ITER", "myindex"}, {"[key8 12 key5 9 key3 7 key6 5 key2 3 key1 2 key7 2 key4 1]"},
+		{"ITER", "myindex", "RANGE", "7", "4"}, {"[key3 7 key6 5]"},
+		{"ITER", "myindex", "RANGE", "(7", "4", "MATCH", "k*"}, {"[key6 5]"},
+		{"ITER", "myindex", "MATCH", "*6"}, {"[key6 5]"},
 	})
 }
 
