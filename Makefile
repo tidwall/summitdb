@@ -9,4 +9,11 @@ install: all
 	@cp summitdb-server /usr/local/bin
 uninstall: 
 	@rm -f /usr/local/bin/summitdb-server
-
+isolated:
+	@rm -rf /tmp/sdb-build && \
+	mkdir -p /tmp/sdb-build/src/github.com/tidwall/ && \
+	cp -rf ${GOPATH}/src/github.com/tidwall/summitdb/ /tmp/sdb-build/src/github.com/tidwall/summitdb && \
+	pushd /tmp/sdb-build/src/github.com/tidwall/summitdb > /dev/null && \
+	GOPATH=/tmp/sdb-build make && \
+	popd > /dev/null && \
+	cp -rf /tmp/sdb-build/src/github.com/tidwall/summitdb/summitdb-server . 
