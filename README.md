@@ -6,7 +6,7 @@
 
 SummitDB is a [NoSQL](https://en.wikipedia.org/wiki/NoSQL) database built on a transactional and strongly-consistent key-value store. It using the [Raft](https://raft.github.io/) consensus algorithm, supports [ACID](https://en.wikipedia.org/wiki/ACID) transactions, a [Redis-style API](https://github.com/tidwall/summitdb/wiki), [custom indexes](https://github.com/tidwall/summitdb/wiki/SETINDEX), [JSON documents](https://github.com/tidwall/summitdb/wiki/SETINDEX#json), [geospatial data](https://github.com/tidwall/summitdb/wiki/SETINDEX#spatial), [user-defined scripting](https://github.com/tidwall/summitdb/wiki/EVAL) using Javascript, and more.
 
-Under the hood it utilizes [Hashicorp Raft](https://github.com/hashicorp/raft), [Finn](https://github.com/tidwall/finn), [Redcon](https://github.com/tidwall/redcon), [BuntDB](https://github.com/tidwall/buntdb), [GJSON](https://github.com/tidwall/gjson), and [Otto](https://github.com/robertkrimen/otto).
+Under the hood it utilizes [Finn](https://github.com/tidwall/finn), [Redcon](https://github.com/tidwall/redcon), [BuntDB](https://github.com/tidwall/buntdb), [GJSON](https://github.com/tidwall/gjson), and [Otto](https://github.com/robertkrimen/otto).
 
 ## Features
 
