@@ -61,7 +61,7 @@ func indexes_SETINDEX_binary(mc *mockCluster) error {
 		{"SET", "key4", "d"}, {"OK"},
 		{"SET", "key1", "E"}, {"OK"},
 		{"SET", "key5", "f"}, {"OK"},
-		{"SETINDEX", "myindex", "*", "BINARY"}, {"OK"},
+		{"SETINDEX", "myindex", "*", "TEXT", "CS"}, {"OK"},
 		{"ITER", "myindex"}, {"[key6 A key3 C key1 E key2 b key4 d key5 f]"},
 	})
 }
@@ -149,8 +149,8 @@ func indexes_SETINDEX_spatialPath(mc *mockCluster) error {
 		{"SET", "key3", `{"r":"[19 32 22]"}`}, {"OK"},
 		{"SET", "key4", `{"r":"[11 10 16]"}`}, {"OK"},
 		{"SET", "key5", `{"r":"[16 27 11]"}`}, {"OK"},
-		{"SETINDEX", "myindex", "*", "SPATIAL", "PATH", "r"}, {"OK"},
-		{"INDEXES", "*", "DETAILS"}, {"[myindex * [[spatial path r]]]"},
+		{"SETINDEX", "myindex", "*", "SPATIAL", "JSON", "r"}, {"OK"},
+		{"INDEXES", "*", "DETAILS"}, {"[myindex * [[spatial json r]]]"},
 		{"RECT", "myindex", `{"r":"[12],[20]"}`}, {`[key3 {"r":"[19 32 22]"} key5 {"r":"[16 27 11]"}]`},
 		{"RECT", "myindex", `{"r":"[10],[20]"}`}, {`[key1 {"r":"[10 15 12]"} key3 {"r":"[19 32 22]"} key4 {"r":"[11 10 16]"} key5 {"r":"[16 27 11]"}]`},
 		{"RECT", "myindex", `{"r":"[16],[+inf]"}`}, {`[key2 {"r":"[21 12 10]"} key3 {"r":"[19 32 22]"} key5 {"r":"[16 27 11]"}]`},

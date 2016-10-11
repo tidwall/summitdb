@@ -327,7 +327,7 @@ func (m *Machine) doScriptableCommand(a finn.Applier, conn redcon.Conn, cmd redc
 		// RECT index bounds [MATCH pattern] [SKIP skip] [LIMIT limit]
 		return m.doRect(a, conn, cmd, tx)
 	case "setindex":
-		// SETINDEX name pattern SPATIAL [PATH path]
+		// SETINDEX name pattern SPATIAL [JSON path]
 		// SETINDEX name pattern TEXT [CS] [COLLATE collate] [ASC|DESC]
 		// SETINDEX name pattern JSON path [CS] [COLLATE collate] [ASC|DESC]
 		// SETINDEX name pattern INT|FLOAT|UINT [ASC|DESC]

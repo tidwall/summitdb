@@ -20,7 +20,7 @@ const indexKeyPrefix = sdbMetaPrefix + "index:"
 type indexArgsIndex struct {
 	Kind      string `json:"kind,omitempty"`
 	Path      string `json:"path,omitempty"`
-	Script    string `json:"path,omitempty"`
+	Script    string `json:"script,omitempty"`
 	CS        bool   `json:"cs,omitempty"`
 	CollateOn bool   `json:"collate_on,omitempty"`
 	Collate   string `json:"collate,omitempty"`
@@ -90,7 +90,7 @@ outer:
 				default:
 					err = errSyntaxError
 					return
-				case "path":
+				case "json":
 					args = args[1:]
 					if len(args) == 0 {
 						err = finn.ErrWrongNumberOfArguments
@@ -250,7 +250,7 @@ func dbSetIndex(tx *buntdb.Tx, rargs indexArgs) error {
 }
 
 func (m *Machine) doSetIndex(a finn.Applier, conn redcon.Conn, cmd redcon.Command, tx *buntdb.Tx) (interface{}, error) {
-	// SETINDEX name pattern SPATIAL [PATH path]
+	// SETINDEX name pattern SPATIAL [JSON path]
 	// SETINDEX name pattern TEXT [CS] [COLLATE collate] [ASC|DESC]
 	// SETINDEX name pattern JSON path [CS] [COLLATE collate] [ASC|DESC]
 	// SETINDEX name pattern INT|FLOAT|UINT [ASC|DESC]
@@ -355,7 +355,7 @@ func (m *Machine) doIndexes(a finn.Applier, conn redcon.Conn, cmd redcon.Command
 					parts = append(parts, idx.Kind)
 					if idx.Kind == "spatial" {
 						if oidx.SpatialPath != "" {
-							parts = append(parts, "path", oidx.SpatialPath)
+							parts = append(parts, "json", oidx.SpatialPath)
 						}
 					} else {
 						if idx.Kind == "json" {
