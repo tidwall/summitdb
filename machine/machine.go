@@ -331,6 +331,7 @@ func (m *Machine) doScriptableCommand(a finn.Applier, conn redcon.Conn, cmd redc
 		// SETINDEX name pattern TEXT [CS] [COLLATE collate] [ASC|DESC]
 		// SETINDEX name pattern JSON path [CS] [COLLATE collate] [ASC|DESC]
 		// SETINDEX name pattern INT|FLOAT|UINT [ASC|DESC]
+		// SETINDEX name pattern EVAL script
 		return m.doSetIndex(a, conn, cmd, tx)
 	case "delindex":
 		// DELINDEX name

@@ -2,9 +2,11 @@ package machine
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/robertkrimen/otto"
 	"github.com/tidwall/buntdb"
 	"github.com/tidwall/collate"
 	"github.com/tidwall/finn"
@@ -18,6 +20,7 @@ const indexKeyPrefix = sdbMetaPrefix + "index:"
 type indexArgsIndex struct {
 	Kind      string `json:"kind,omitempty"`
 	Path      string `json:"path,omitempty"`
+	Script    string `json:"path,omitempty"`
 	CS        bool   `json:"cs,omitempty"`
 	CollateOn bool   `json:"collate_on,omitempty"`
 	Collate   string `json:"collate,omitempty"`
@@ -46,6 +49,7 @@ func (iargs indexArgs) Equals(rargs indexArgs) bool {
 		ridx := rargs.Indexes[i]
 		if iidx.Kind != ridx.Kind ||
 			iidx.Path != ridx.Path ||
+			iidx.Script != ridx.Script ||
 			iidx.CS != ridx.CS ||
 			iidx.CollateOn != ridx.CollateOn ||
 			iidx.Collate != ridx.Collate ||
@@ -105,6 +109,13 @@ outer:
 				return
 			}
 			idx.Path = string(args[0])
+		case "eval":
+			args = args[1:]
+			if len(args) == 0 {
+				err = finn.ErrWrongNumberOfArguments
+				return
+			}
+			idx.Script = string(args[0])
 		}
 		args = args[1:]
 		if idx.Kind != "spatial" {
@@ -149,6 +160,22 @@ func indexRectPath(path string) func(s string) (min, max []float64) {
 	}
 }
 
+func indexEval(script string) (lesser func(a, b string) bool, err error) {
+	vm := otto.New()
+	val, err := vm.Eval("(" + script + ")")
+	if err != nil {
+		return nil, err
+	}
+	if !val.IsFunction() {
+		return nil, errors.New("ERR expecting a function")
+	}
+	return func(a, b string) bool {
+		res, _ := val.Call(otto.Value{}, a, b)
+		t, _ := res.ToBoolean()
+		return t
+	}, nil
+}
+
 func dbSetIndex(tx *buntdb.Tx, rargs indexArgs) error {
 	// execute
 	if err := tx.DropIndex(rargs.Name); err != nil && err != buntdb.ErrNotFound {
@@ -189,6 +216,12 @@ func dbSetIndex(tx *buntdb.Tx, rargs indexArgs) error {
 				} else {
 					lesser = buntdb.IndexJSON(idx.Path)
 				}
+			case "eval":
+				var err error
+				lesser, err = indexEval(idx.Script)
+				if err != nil {
+					return err
+				}
 			case "int":
 				lesser = buntdb.IndexInt
 			case "uint":
@@ -221,6 +254,7 @@ func (m *Machine) doSetIndex(a finn.Applier, conn redcon.Conn, cmd redcon.Comman
 	// SETINDEX name pattern TEXT [CS] [COLLATE collate] [ASC|DESC]
 	// SETINDEX name pattern JSON path [CS] [COLLATE collate] [ASC|DESC]
 	// SETINDEX name pattern INT|FLOAT|UINT [ASC|DESC]
+	// SETINDEX name pattern EVAL script
 	rargs, err := parseIndexArgs(cmd)
 	if err != nil {
 		return nil, err
@@ -326,6 +360,9 @@ func (m *Machine) doIndexes(a finn.Applier, conn redcon.Conn, cmd redcon.Command
 					} else {
 						if idx.Kind == "json" {
 							parts = append(parts, idx.Path)
+						}
+						if idx.Kind == "eval" {
+							parts = append(parts, idx.Script)
 						}
 						if idx.CollateOn {
 							parts = append(parts, "collate", idx.Collate)
