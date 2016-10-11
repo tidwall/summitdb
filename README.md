@@ -16,9 +16,9 @@ The goal was to create a fast data store that provides:
 - Simplified Redis-style APIs  
 - Strong-consistency and durability  
 - Ordered key space  
-- Indexing on values
+- [Indexing on values](https://github.com/tidwall/summitdb/wiki/SETINDEX#text)
 - [JSON documents](#json-indexes)
-- Spatial indexing
+- [Spatial indexing](https://github.com/tidwall/summitdb/wiki/SETINDEX#spatial)
 
 It's a NoSQL solution that is somewhere between Redis and MongoDB, with ACID and high-availablity.
 
