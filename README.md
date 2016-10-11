@@ -1,7 +1,7 @@
 <p align="center">
 <img 
     src="resources/logo.png" 
-    width="380" height="93" border="0" alt="SummitDB">
+    width="350" height="85" border="0" alt="SummitDB">
 </p>
 
 SummitDB is a [NoSQL](https://en.wikipedia.org/wiki/NoSQL) database built on a transactional and strongly-consistent key-value store. It using the [Raft](https://raft.github.io/) consensus algorithm, supports [ACID](https://en.wikipedia.org/wiki/ACID) transactions, a [Redis-style API](https://github.com/tidwall/wiki), [custom indexes](https://github.com/tidwall/summitdb/wiki/SETINDEX), [JSON documents](https://github.com/tidwall/summitdb/wiki/SETINDEX#json), [geospatial data](https://github.com/tidwall/summitdb/wiki/SETINDEX#spatial), [user-defined scripting](https://github.com/tidwall/summitdb/wiki/EVAL) using Javascript, and more.
