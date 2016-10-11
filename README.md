@@ -20,7 +20,7 @@ The goal of SummitDB is to create a fast data store that provides:
 - JSON documents
 - Spatial indexing
 
-SummitDB is a NoSQL solution that is somewhere between Redis and MongoDB, with ACID and high-availablity built in.
+SummitDB is a NoSQL solution that is somewhere between Redis and MongoDB, with ACID and high-availablity.
 
 ## Getting started
 
