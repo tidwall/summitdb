@@ -20,7 +20,6 @@ The goal was to create a fast data store that provides:
 - [JSON documents](#json-indexes)
 - [Spatial indexing](https://github.com/tidwall/summitdb/wiki/SETINDEX#spatial)
 
-It's a NoSQL solution that is somewhere between Redis and MongoDB, with ACID and high-availablity.
 
 ## Getting started
 
