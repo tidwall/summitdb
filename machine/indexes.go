@@ -73,7 +73,7 @@ outer:
 		default:
 			err = errSyntaxError
 			return
-		case "text", "binary", "int", "float", "uint":
+		case "text", "int", "float", "uint":
 		case "spatial":
 			if len(rargs.Indexes) > 0 {
 				err = errSyntaxError
@@ -114,7 +114,7 @@ outer:
 				default:
 					break loop
 				case "cs":
-					if idx.Kind != "json" {
+					if idx.Kind != "text" && idx.Kind != "json" {
 						break loop
 					}
 					idx.CS = true
@@ -176,6 +176,8 @@ func dbSetIndex(tx *buntdb.Tx, rargs indexArgs) error {
 			case "text":
 				if idx.CollateOn {
 					lesser = collate.IndexString(idx.Collate)
+				} else if idx.CS {
+					lesser = buntdb.IndexBinary
 				} else {
 					lesser = buntdb.IndexString
 				}
@@ -193,8 +195,6 @@ func dbSetIndex(tx *buntdb.Tx, rargs indexArgs) error {
 				lesser = buntdb.IndexUint
 			case "float":
 				lesser = buntdb.IndexFloat
-			case "binary":
-				lesser = buntdb.IndexBinary
 			}
 			if idx.Desc {
 				lesser = buntdb.Desc(lesser)
@@ -218,9 +218,9 @@ func dbSetIndex(tx *buntdb.Tx, rargs indexArgs) error {
 
 func (m *Machine) doSetIndex(a finn.Applier, conn redcon.Conn, cmd redcon.Command, tx *buntdb.Tx) (interface{}, error) {
 	// SETINDEX name pattern SPATIAL [PATH path]
-	// SETINDEX name pattern TEXT [COLLATE collate] [ASC|DESC]
-	// SETINDEX name pattern JSON path [COLLATE collate] [ASC|DESC]
-	// SETINDEX name pattern BINARY|INT|FLOAT|UINT [ASC|DESC]
+	// SETINDEX name pattern TEXT [CS] [COLLATE collate] [ASC|DESC]
+	// SETINDEX name pattern JSON path [CS] [COLLATE collate] [ASC|DESC]
+	// SETINDEX name pattern INT|FLOAT|UINT [ASC|DESC]
 	rargs, err := parseIndexArgs(cmd)
 	if err != nil {
 		return nil, err
@@ -319,22 +319,23 @@ func (m *Machine) doIndexes(a finn.Applier, conn redcon.Conn, cmd redcon.Command
 				for _, idx := range oidx.Indexes {
 					var parts []string
 					parts = append(parts, idx.Kind)
-					if idx.Kind == "json" {
-						parts = append(parts, idx.Path)
-						if idx.CS {
-							parts = append(parts, "cs")
-						}
-					}
 					if idx.Kind == "spatial" {
 						if oidx.SpatialPath != "" {
 							parts = append(parts, "path", oidx.SpatialPath)
 						}
-					}
-					if idx.CollateOn {
-						parts = append(parts, "collate", idx.Collate)
-					}
-					if idx.Desc {
-						parts = append(parts, "desc")
+					} else {
+						if idx.Kind == "json" {
+							parts = append(parts, idx.Path)
+						}
+						if idx.CollateOn {
+							parts = append(parts, "collate", idx.Collate)
+						}
+						if idx.CS {
+							parts = append(parts, "cs")
+						}
+						if idx.Desc {
+							parts = append(parts, "desc")
+						}
 					}
 					conn.WriteArray(len(parts))
 					for _, part := range parts {

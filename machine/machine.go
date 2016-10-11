@@ -328,9 +328,9 @@ func (m *Machine) doScriptableCommand(a finn.Applier, conn redcon.Conn, cmd redc
 		return m.doRect(a, conn, cmd, tx)
 	case "setindex":
 		// SETINDEX name pattern SPATIAL [PATH path]
-		// SETINDEX name pattern TEXT [COLLATE collate] [ASC|DESC]
+		// SETINDEX name pattern TEXT [CS] [COLLATE collate] [ASC|DESC]
 		// SETINDEX name pattern JSON path [CS] [COLLATE collate] [ASC|DESC]
-		// SETINDEX name pattern BINARY|INT|FLOAT|UINT [ASC|DESC]
+		// SETINDEX name pattern INT|FLOAT|UINT [ASC|DESC]
 		return m.doSetIndex(a, conn, cmd, tx)
 	case "delindex":
 		// DELINDEX name
