@@ -17,7 +17,7 @@ The goal was to create a fast data store that provides:
 - Strong-consistency and durability  
 - Ordered key space  
 - Indexing on values
-- JSON documents
+- [JSON documents](#json-indexes)
 - Spatial indexing
 
 It's a NoSQL solution that is somewhere between Redis and MongoDB, with ACID and high-availablity.
@@ -83,6 +83,71 @@ That's it. Now if node1 goes down, node2 and node3 will continue to operate.
 - **Indexes** - SummitDB provides an API for indexing the key space. Indexes allow for quickly querying and iterating on values. Redis has specialized data types like Sorted Sets and Hashes which can provide [secondary indexing](http://redis.io/topics/indexes).
 - **Spatial indexes** - SummitDB provides the ability to create spatial indexes. A spatial index uses an R-tree under the hood, and each index can be up to 20 dimensions. This is useful for geospatial, statistical, time, and range data. Redis has the [GEO API](http://redis.io/commands/geoadd) which allows for using storing and querying geospatial data using the [Geohashes](https://en.wikipedia.org/wiki/Geohash).
 - **JSON documents** - SummitDB allows for storing JSON documents and indexing fields directly. Redis has Hashes and a JSON parser via Lua.
+
+## JSON Indexes
+
+Indexes can be created on individual fields inside JSON documents.
+
+For example, let's say you have the following documents:
+
+```json
+{"name":{"first":"Tom","last":"Johnson"},"age":38}
+{"name":{"first":"Janet","last":"Prichard"},"age":47}
+{"name":{"first":"Carol","last":"Anderson"},"age":52}
+{"name":{"first":"Alan","last":"Cooper"},"age":28}
+```
+
+Create an index:
+
+```
+> SETINDEX last_name user:* JSON name.last
+```
+
+Then add some JSON:
+```
+> SET user:1 '{"name":{"first":"Tom","last":"Johnson"},"age":38}'
+> SET user:2 '{"name":{"first":"Janet","last":"Prichard"},"age":47}'
+> SET user:3 '{"name":{"first":"Carol","last":"Anderson"},"age":52}'
+> SET user:4 '{"name":{"first":"Alan","last":"Cooper"},"age":28}'
+```
+
+Query with the ITER command:
+
+```
+> ITER last_name
+1) "user:3"
+2) "{\"name\":{\"first\":\"Carol\",\"last\":\"Anderson\"},\"age\":52}"
+3) "user:4"
+4) "{\"name\":{\"first\":\"Alan\",\"last\":\"Cooper\"},\"age\":28}"
+5) "user:1"
+6) "{\"name\":{\"first\":\"Tom\",\"last\":\"Johnson\"},\"age\":38}"
+7) "user:2"
+8) "{\"name\":{\"first\":\"Janet\",\"last\":\"Prichard\"},\"age\":47}"
+```
+
+Or perhaps you want to index on age:
+
+```
+> SETINDEX age user:* JSON age
+> ITER age
+1) "user:4"
+2) "{\"name\":{\"first\":\"Alan\",\"last\":\"Cooper\"},\"age\":28}"
+3) "user:1"
+4) "{\"name\":{\"first\":\"Tom\",\"last\":\"Johnson\"},\"age\":38}"
+5) "user:2"
+6) "{\"name\":{\"first\":\"Janet\",\"last\":\"Prichard\"},\"age\":47}"
+7) "user:3"
+8) "{\"name\":{\"first\":\"Carol\",\"last\":\"Anderson\"},\"age\":52}"
+```
+
+It's also possible to multi-index on two fields:
+
+```
+> SETINDEX last_name_age user:* JSON name.last JSON age
+```
+
+For full JSON indexing syntax check out the [SETINDEX](https://github.com/tidwall/summitdb/wiki/SETINDEX#json) and [ITER](https://github.com/tidwall/summitdb/wiki/ITER) commands.
+
 
 
 ## Commands
