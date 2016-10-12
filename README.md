@@ -15,6 +15,7 @@ The goal was to create a fast data store that provides:
 - In-memory NoSQL solution
 - Simplified Redis-style APIs  
 - Strong-consistency and durability  
+- Data persists to disk
 - Ordered key space  
 - [Indexing on values](https://github.com/tidwall/summitdb/wiki/SETINDEX#text)
 - [JSON documents](#json-indexes)
