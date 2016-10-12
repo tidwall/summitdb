@@ -12,7 +12,7 @@ Under the hood it utilizes [Finn](https://github.com/tidwall/finn), [Redcon](htt
 
 The goal was to create a fast data store that provides:
 
-- In-memory with disk persistence
+- [In-memory with disk persistence](#in-memory-disk-persistence)
 - [Strong-consistency and durability](#consistency-and-durability)
 - High-availability
 - Simplified Redis-style APIs
@@ -83,6 +83,13 @@ That's it. Now if node1 goes down, node2 and node3 will continue to operate.
 - **Indexes** - SummitDB provides an API for indexing the key space. Indexes allow for quickly querying and iterating on values. Redis has specialized data types like Sorted Sets and Hashes which can provide [secondary indexing](http://redis.io/topics/indexes).
 - **Spatial indexes** - SummitDB provides the ability to create spatial indexes. A spatial index uses an R-tree under the hood, and each index can be up to 20 dimensions. This is useful for geospatial, statistical, time, and range data. Redis has the [GEO API](http://redis.io/commands/geoadd) which allows for using storing and querying geospatial data using the [Geohashes](https://en.wikipedia.org/wiki/Geohash).
 - **JSON documents** - SummitDB allows for storing JSON documents and indexing fields directly. Redis has Hashes and a JSON parser via Lua.
+
+<a name="in-memory-disk-persistence"></a>
+## In-memory with disk persistence
+SummitDB store all data in memory. Yet each writable command is appended to a file that is used to rebuild the database if the database needs to be restarted. 
+
+This is similar to [Redis AOF persistence](http://redis.io/topics/persistence).
+
 
 ## JSON Indexes
 
