@@ -17,7 +17,7 @@ The goal was to create a fast data store that provides:
 - Strong-consistency and durability  
 - Data persists to disk
 - Ordered key space  
-- [Indexing on values](https://github.com/tidwall/summitdb/wiki/SETINDEX#text)
+- [Indexing on values](https://github.com/tidwall/summitdb/wiki/SETINDEX)
 - [JSON documents](#json-indexes)
 - [Spatial indexing](https://github.com/tidwall/summitdb/wiki/SETINDEX#spatial)
 
