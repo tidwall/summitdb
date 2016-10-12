@@ -185,7 +185,7 @@ The `--consistency` param has the following options:
 For example, setting the following options:
 
 ```
-$ redraft --consistency high
+$ summitdb --consistency high
 ```
 
 Provides the highest level of consistency. The default is **high**.
