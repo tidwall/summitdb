@@ -13,10 +13,10 @@ Under the hood it utilizes [Finn](https://github.com/tidwall/finn), [Redcon](htt
 The goal was to create a fast data store that provides:
 
 - In-memory NoSQL solution
-- Simplified Redis-style APIs  
-- Strong-consistency and durability  
+- Simplified Redis-style APIs
+- [Strong-consistency and durability](#consistency-and-durability)
 - Data persists to disk
-- Ordered key space  
+- Ordered key space
 - [Indexing on values](https://github.com/tidwall/summitdb/wiki/SETINDEX)
 - [JSON documents](#json-indexes)
 - [Spatial indexing](https://github.com/tidwall/summitdb/wiki/SETINDEX#spatial)
@@ -148,9 +148,63 @@ It's also possible to multi-index on two fields:
 
 For full JSON indexing syntax check out the [SETINDEX](https://github.com/tidwall/summitdb/wiki/SETINDEX#json) and [ITER](https://github.com/tidwall/summitdb/wiki/ITER) commands.
 
+<a href="raft-commands"></a>
+Built-in Raft Commands
+----------------------
+Here are a few commands for monitoring and managing the cluster:
+
+- **RAFTADDPEER addr**  
+Adds a new member to the Raft cluster
+- **RAFTREMOVEPEER addr**  
+Removes an existing member
+- **RAFTLEADER**  
+Returns the Raft leader, if known
+- **RAFTSNAPSHOT**  
+Triggers a snapshot operation
+- **RAFTSTATE**  
+Returns the state of the node
+- **RAFTSTATS**  
+Returns information and statistics for the node and cluster
+
+Consistency and Durability
+--------------------------
+
+SummitDB is tuned by design for strong consistency and durability. A server shutdown, power event, or `kill -9` will not corrupt the state of the cluster or lose data. 
+
+All data persists to disk. SummitDB uses an append-only file format that stores for each command in exact order of execution. 
+Each command consists of a one write and one fync. This provides excellent durability.
+
+### Read Consistency
+
+The `--consistency` param has the following options:
+
+- `low` - all nodes accept reads, small risk of [stale](http://stackoverflow.com/questions/1563319/what-is-stale-state) data
+- `medium` - only the leader accepts reads, itty-bitty risk of stale data during a leadership change
+- `high` - only the leader accepts reads, the raft log index is incremented to guaranteeing no stale data. **this is the default**
+
+For example, setting the following options:
+
+```
+$ redraft --consistency high
+```
+
+Provides the highest level of consistency. The default is **high**.
 
 
-## Commands
+Leadership Changes
+------------------
+
+In a Raft cluster only the leader can apply commands. If a command is attempted on a follower you will be presented with the response:
+
+```
+> SET x y
+-TRY 127.0.0.1:7481
+```
+
+This means you should try the same command at the specified address.
+
+Commands
+--------
 
 Below is the complete list of commands and documentation for each.
 
