@@ -73,7 +73,7 @@ That's it. Now if node1 goes down, node2 and node3 will continue to operate.
 
 ## Difference between SummitDB and Redis
 
-*It may be worth noting that SummitDB is not a Redis clone. Redis has a lot of commands and data types that not available in SummitDB, such Sets, Hashes, Sorted Sets, and PubSub.*
+*It may be worth noting that SummitDB is not a Redis clone. Redis has a lot of commands and data types that are not available in SummitDB, such Sets, Hashes, Sorted Sets, and PubSub.*
 
 - **Ordered key space** - SummitDB provides one key space that is a large B-tree. An ordered key space allows for stable paging through keys using the [KEYS](https://github.com/tidwall/summitdb/wiki/KEYS) command. Redis uses an unordered dictionary structure and provides a specialized [SCAN](http://redis.io/commands/scan) command for iterating through keys.
 - **Everything a string** - SummitDB stores only strings which are exact binary representations of what the user stores. Redis has many [internal data types](http://redis.io/topics/data-types-intro), such as strings, hashes, floats, sets, etc. 
