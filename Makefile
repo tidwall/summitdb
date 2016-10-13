@@ -1,15 +1,5 @@
-all:
-	@NOOP=`go version` && \
-	TMP=`mktemp -d -t sdb.XXXX` && \
-	mkdir -p $$TMP/src/github.com/tidwall/ && \
-	cp -rf . $$TMP/src/github.com/tidwall/summitdb && \
-	pushd $$TMP/src/github.com/tidwall/summitdb > /dev/null && \
-	GOPATH=$$TMP/ make build && \
-	popd > /dev/null && \
-	cp -rf $$TMP/src/github.com/tidwall/summitdb/summitdb-server . && \
-	rm -rf $$TMP/
-build: 
-	@go build -ldflags "-X main.version=0.2.1" -o summitdb-server cmd/summitdb-server/main.go 
+all: 
+	@./build.sh
 clean:
 	@rm -f summitdb-server
 	@rm -rf redis-3.2.4
