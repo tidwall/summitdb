@@ -29,4 +29,3 @@ redis-cli:
 	cp src/redis-cli .. && \
 	cd .. && \
 	rm -rf redis-3.2.4
-
