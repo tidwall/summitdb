@@ -20,12 +20,23 @@ import (
 const scriptErrPrefix = "eval err:"
 const scriptKeyPrefix = sdbMetaPrefix + "script:"
 
+var errNoScript = errors.New("NOSCRIPT No matching script. Please use EVAL.")
+
+// scriptVM is is used to contain a compiled script and the parent otto VM.
+type scriptVM struct {
+	mu     sync.Mutex
+	script *otto.Script
+	vm     *otto.Otto
+}
+
 // scriptMachine represents a global javascript VM and
 // contains all of the runContexts.
 type scriptMachine struct {
 	mu      sync.Mutex
-	vm      *otto.Otto
+	vm      *otto.Otto             // root vm
+	cache   map[string]*scriptVM   // cache scripts
 	runCtxs map[string]*runContext // run contexts
+	log     finn.Logger            // main logger
 }
 
 // newScriptMachine creates a new scriptMachine that is shared
@@ -34,7 +45,8 @@ func newScriptMachine(m *Machine) (*scriptMachine, error) {
 	sm := &scriptMachine{}
 	sm.vm = otto.New()
 	sm.runCtxs = make(map[string]*runContext)
-
+	sm.cache = make(map[string]*scriptVM)
+	sm.log = m.log
 	_, err := sm.vm.Run(`
 			var SummitDB = (function(){
 				var ErrorReply = function(err){
@@ -49,10 +61,7 @@ func newScriptMachine(m *Machine) (*scriptMachine, error) {
 				StatusReply.prototype.toString = function(){
 					return this.ok.toString();
 				}
-				var SummitDB = function(sha, runid){
-					this.sha = sha;
-					this.runid = runid;
-				}
+				var SummitDB = function(){}
 				SummitDB.prototype.errorReply = function(err){
 					return new ErrorReply(err);
 				}
@@ -64,6 +73,8 @@ func newScriptMachine(m *Machine) (*scriptMachine, error) {
 				}
 				return SummitDB;
 			}())
+			var sdb = new SummitDB();
+			var redis = sdb;
 		`)
 	if err != nil {
 		return nil, err
@@ -78,16 +89,14 @@ func newScriptMachine(m *Machine) (*scriptMachine, error) {
 	}
 	proto := v.Object()
 	sdbCall := func(name string, call otto.FunctionCall) otto.Value {
-		v, err := call.Otto.Get("sdb")
-		if err != nil {
-			panic(scriptErrPrefix + err.Error())
-		}
-		v, err = v.Object().Get("runid")
+		v, err := call.Otto.Get("runid")
 		if err != nil {
 			panic(scriptErrPrefix + err.Error())
 		}
 		runid := v.String()
+		sm.mu.Lock()
 		ctx := sm.runCtxs[runid]
+		sm.mu.Unlock()
 		cmd := cmdFromArgs(call.Otto, call.ArgumentList)
 		_, err = m.doScriptableCommand(ctx.a, ctx.conn, cmd, ctx.tx)
 		if err != nil {
@@ -149,6 +158,52 @@ func newScriptMachine(m *Machine) (*scriptMachine, error) {
 		return nil, err
 	}
 	return sm, nil
+}
+
+func (sm *scriptMachine) flushScripts() {
+	sm.mu.Lock()
+	defer sm.mu.Unlock()
+	sm.cache = make(map[string]*scriptVM)
+}
+
+func (sm *scriptMachine) compileScript(javascript string) (sha string, script *scriptVM, err error) {
+	src := sha1.Sum([]byte(javascript))
+	sha = hex.EncodeToString(src[:])
+	sm.mu.Lock()
+	defer sm.mu.Unlock()
+	var ok bool
+	script = sm.cache[sha]
+	if ok {
+		return sha, script, nil
+	}
+	script = &scriptVM{vm: sm.vm.Copy()}
+	script.script, err = script.vm.Compile("", "(function(){"+javascript+"})()")
+	if err != nil {
+		return "", script, err
+	}
+	sm.cache[sha] = script
+	return sha, script, nil
+}
+
+func (sm *scriptMachine) getScript(sha string) *scriptVM {
+	sm.mu.Lock()
+	defer sm.mu.Unlock()
+	return sm.cache[sha]
+}
+
+func (sm *scriptMachine) addRunContext(runid string, tx *buntdb.Tx) {
+	sm.mu.Lock()
+	defer sm.mu.Unlock()
+	sm.runCtxs[runid] = &runContext{
+		tx:   tx,
+		conn: &passiveConn{},
+		a:    &passiveApplier{log: sm.log},
+	}
+}
+func (sm *scriptMachine) removeRunContext(runid string) {
+	sm.mu.Lock()
+	defer sm.mu.Unlock()
+	delete(sm.runCtxs, runid)
 }
 
 // runContext is used for unique values for each EVAL call.
@@ -262,26 +317,20 @@ func (m *Machine) doScript(a finn.Applier, conn redcon.Conn, cmd redcon.Command,
 }
 
 func (m *Machine) doScriptLoad(a finn.Applier, conn redcon.Conn, cmd redcon.Command, tx *buntdb.Tx) (interface{}, error) {
+	// SCRIPT LOAD script
 	if len(cmd.Args) != 3 {
 		return nil, finn.ErrWrongNumberOfArguments
 	}
+	javascript := string(cmd.Args[2])
+	// compile script and store in cache. We don't need the compiled script yet,
+	// but it's ready when we need it.
+	sha, _, err := m.sm.compileScript(javascript)
+	if err != nil {
+		return nil, fmt.Errorf("ERR Error compiling script %v", err)
+	}
 	return m.writeDoApply(a, conn, cmd, tx, func(tx *buntdb.Tx) (interface{}, error) {
-		// get the sha1
-		sha := func() string {
-			src := sha1.Sum(cmd.Args[2])
-			return hex.EncodeToString(src[:])
-		}()
-		javascript := `(function(){` + string(cmd.Args[2]) + `})();`
-		var err error
-		func() {
-			m.sm.mu.Lock()
-			defer m.sm.mu.Unlock()
-			_, err = m.sm.vm.Compile("(new function)", javascript)
-		}()
-		if err != nil {
-			return nil, fmt.Errorf("ERR Error compiling script %v", err)
-		}
-		_, _, err = tx.Set(scriptKeyPrefix+sha, string(cmd.Args[2]), nil)
+		// store the script in the database.
+		_, _, err = tx.Set(scriptKeyPrefix+sha, javascript, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -293,10 +342,14 @@ func (m *Machine) doScriptLoad(a finn.Applier, conn redcon.Conn, cmd redcon.Comm
 }
 
 func (m *Machine) doScriptFlush(a finn.Applier, conn redcon.Conn, cmd redcon.Command, tx *buntdb.Tx) (interface{}, error) {
+	// SCRIPT FLUSH
 	if len(cmd.Args) != 2 {
 		return nil, finn.ErrWrongNumberOfArguments
 	}
+	// remove all compiled script
+	m.sm.flushScripts()
 	return m.writeDoApply(a, conn, cmd, tx, func(tx *buntdb.Tx) (interface{}, error) {
+		// delete from the database too
 		var keys []string
 		if err := tx.AscendGreaterOrEqual("", scriptKeyPrefix, func(key, val string) bool {
 			if !strings.HasPrefix(key, scriptKeyPrefix) {
@@ -367,52 +420,60 @@ func (m *Machine) doEval(a finn.Applier, conn redcon.Conn, cmd redcon.Command, t
 	if err != nil {
 		return nil, err
 	}
+	// create a run id
+	nsrc := make([]byte, 20)
+	if _, err := rand.Read(nsrc); err != nil {
+		panic("random err: " + err.Error())
+	}
+	runid := hex.EncodeToString(nsrc)
 
+	// get the script ahead of time
+	var sha string
+	var javascript string
+	var script *scriptVM
+	if shad {
+		sha = string(cmd.Args[1])
+		script = m.sm.getScript(sha)
+		if script == nil {
+			// we do not have a script, but that's ok cause it's possible
+			// the script exists in the database.
+		}
+	} else {
+		javascript = string(cmd.Args[1])
+		var err error
+		sha, script, err = m.sm.compileScript(javascript)
+		if err != nil {
+			return nil, err
+		}
+		// we have a script and a sha.
+	}
 	dowr := func(a finn.Applier, conn redcon.Conn, cmd redcon.Command, tx *buntdb.Tx) (interface{}, error) {
-		var sha string
-		var script string
-		if shad {
-			sha = string(cmd.Args[1])
-			val, err := tx.Get(scriptKeyPrefix + sha)
+		var err error
+		if script == nil {
+			// load the javascript from the database
+			javascript, err = tx.Get(scriptKeyPrefix + sha)
 			if err != nil {
 				if err == buntdb.ErrNotFound {
-					return nil, errors.New("NOSCRIPT No matching script. Please use EVAL.")
+					return nil, errNoScript
 				}
 				return nil, err
 			}
-			script = val
-		} else {
-			// evaluate the sha1
-			sha = func() string {
-				src := sha1.Sum(cmd.Args[1])
-				return hex.EncodeToString(src[:])
-			}()
-			script = string(cmd.Args[1])
-		}
-		// create a run id
-		run := func() string {
-			nsrc := make([]byte, 20)
-			if _, err := rand.Read(nsrc); err != nil {
-				panic("random err: " + err.Error())
+			// we have a sha, javascript, but no compiled script. compile now
+			_, script, err = m.sm.compileScript(javascript)
+			if err != nil {
+				// an error here may be really bad becuase it means that somehow
+				// bad javascript was added to the database. just return the
+				// error until we have a better strategy.
+				return nil, err
 			}
-			return hex.EncodeToString(nsrc)
-		}()
-		m.sm.mu.Lock()
-		// each eval gets it own context
-		vm := m.sm.vm.Copy()
-		m.sm.runCtxs[run] = &runContext{
-			tx:   tx,
-			conn: &passiveConn{},
-			a:    &passiveApplier{log: m.log},
+			// yay. we now have a sha, javascript and a compiled script.
 		}
-		m.sm.mu.Unlock()
-		defer func() {
-			m.sm.mu.Lock()
-			delete(m.sm.runCtxs, run)
-			m.sm.mu.Unlock()
-		}()
+
+		// create a run context.
+		m.sm.addRunContext(runid, tx)
+		defer m.sm.removeRunContext(runid)
+
 		var v interface{}
-		var err error
 		func() {
 			defer func() {
 				if v := recover(); v != nil {
@@ -425,14 +486,19 @@ func (m *Machine) doEval(a finn.Applier, conn redcon.Conn, cmd redcon.Command, t
 							}
 						}
 					} else {
+						m.log.Warningf("script panic: %v", v)
 						panic(v)
 					}
 				}
 			}()
-			vm.Set("KEYS", keys)
-			vm.Set("ARGV", argv)
-			vm.Run(`var sdb = new SummitDB('` + sha + `','` + run + `')`)
-			v, err = vm.Run(`(function(){` + script + `})();`)
+			// lock the script. it can only run one at a time.
+			script.mu.Lock()
+			defer script.mu.Unlock()
+			script.vm.Set("runid", runid)
+			script.vm.Set("sha", sha)
+			script.vm.Set("KEYS", keys)
+			script.vm.Set("ARGV", argv)
+			v, err = script.vm.Run(script.script)
 		}()
 		return v, err
 	}
