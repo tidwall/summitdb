@@ -187,7 +187,7 @@ The `--consistency` param has the following options:
 
 - `low` - all nodes accept reads, small risk of [stale](http://stackoverflow.com/questions/1563319/what-is-stale-state) data
 - `medium` - only the leader accepts reads, itty-bitty risk of stale data during a leadership change
-- `high` - only the leader accepts reads, the raft log index is incremented to guaranteeing no stale data. **this is the default**
+- `high` - only the leader accepts reads, the raft log index is incremented to guarantee no stale data. **this is the default**
 
 For example, setting the following options:
 
