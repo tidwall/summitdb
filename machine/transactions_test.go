@@ -13,6 +13,7 @@ func subTestTransactions(t *testing.T, mc *mockCluster) {
 	runStep(t, mc, "SET", transactions_SET_test)
 	runStep(t, mc, "GET", transactions_GET_test)
 	runStep(t, mc, "MULTI", transactions_MULTI_test)
+	runStep(t, mc, "FENCE", transactions_FENCE_test)
 }
 
 func transactions_MULTI_test(mc *mockCluster) error {
@@ -159,4 +160,31 @@ func transactions_GET_test(mc *mockCluster) error {
 		}
 		return fmt.Errorf("expected '%v', got '%v'", "-TRY or $-1", lines[0])
 	}
+}
+
+func transactions_FENCE_test(mc *mockCluster) error {
+	return mc.DoBatch([][]interface{}{
+		{"FENCE", "mytoken1"}, {"1"},
+		{"FENCE", "mytoken1"}, {"2"},
+		{"FENCE", "mytoken1"}, {"3"},
+		{"FENCE", "mytoken1"}, {"4"},
+		{"FENCE", "mytoken1"}, {"5"},
+		{"FENCE", "mytoken2"}, {"1"},
+		{"FENCE", "mytoken2"}, {"2"},
+		{"FENCE", "mytoken2"}, {"3"},
+		{"FENCE", "mytoken2"}, {"4"},
+		{"FENCE", "mytoken2"}, {"5"},
+	})
+	return mc.DoBatch([][]interface{}{
+		{"FENCE", "mytoken1"}, {"6"},
+		{"FENCE", "mytoken1"}, {"7"},
+		{"FENCE", "mytoken1"}, {"8"},
+		{"FENCE", "mytoken1"}, {"9"},
+		{"FENCE", "mytoken1"}, {"10"},
+		{"FENCE", "mytoken2"}, {"6"},
+		{"FENCE", "mytoken2"}, {"7"},
+		{"FENCE", "mytoken2"}, {"8"},
+		{"FENCE", "mytoken2"}, {"9"},
+		{"FENCE", "mytoken2"}, {"10"},
+	})
 }

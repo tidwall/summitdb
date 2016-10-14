@@ -379,5 +379,8 @@ func (m *Machine) doScriptableCommand(a finn.Applier, conn redcon.Conn, cmd redc
 	case "dbsize":
 		// DBSIZE
 		return m.doDbsize(a, conn, cmd, tx)
+	case "fence":
+		// FENCE token
+		return m.doFence(a, conn, cmd, tx)
 	}
 }

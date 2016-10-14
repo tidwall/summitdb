@@ -20,7 +20,7 @@ The goal was to create a fast data store that provides:
 - [Indexing on values](https://github.com/tidwall/summitdb/wiki/SETINDEX)
 - [JSON documents](#json-indexes)
 - [Spatial indexing](https://github.com/tidwall/summitdb/wiki/SETINDEX#spatial)
-
+- [Fencing tokens](#fencing-tokens)
 
 ## Getting started
 
@@ -155,6 +155,23 @@ It's also possible to multi-index on two fields:
 
 For full JSON indexing syntax check out the [SETINDEX](https://github.com/tidwall/summitdb/wiki/SETINDEX#json) and [ITER](https://github.com/tidwall/summitdb/wiki/ITER) commands.
 
+Fencing Tokens
+--------------
+A fencing token is simply a number that increases. 
+It's guaranteed to be consistent across the cluster and can never be deleted or decreased. 
+The value is a 64-bit unsigned integer. The first FENCE call will return "1".
+This is useful for things like distributed locking and preventing race conditions.
+
+```
+> FENCE mytoken
+"1"
+> FENCE mytoken
+"2"
+> FENCE mytoken
+"3"
+```
+
+
 <a href="raft-commands"></a>
 Built-in Raft Commands
 ----------------------
@@ -252,6 +269,7 @@ Below is the complete list of commands and documentation for each.
 [STRLEN](https://github.com/tidwall/summitdb/wiki/STRLEN),
 [TTL](https://github.com/tidwall/summitdb/wiki/TTL)
 
+
 **Indexes and iteration**  
 [DELINDEX](https://github.com/tidwall/summitdb/wiki/DELINDEX),
 [INDEXES](https://github.com/tidwall/summitdb/wiki/INDEXES),
@@ -279,6 +297,9 @@ Below is the complete list of commands and documentation for each.
 [RAFTSNAPSHOT](https://github.com/tidwall/summitdb/wiki/RAFTSNAPSHOT),
 [RAFTSTATE](https://github.com/tidwall/summitdb/wiki/RAFTSTATE),
 [RAFTSTATS](https://github.com/tidwall/summitdb/wiki/RAFTSTATS)
+
+**Fencing tokens**  
+[FENCE](https://github.com/tidwall/summitdb/wiki/FENCE)
 
 ## Contact
 Josh Baker [@tidwall](http://twitter.com/tidwall)
