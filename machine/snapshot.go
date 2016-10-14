@@ -19,7 +19,7 @@ func (m *Machine) Restore(rd io.Reader) error {
 	// the new machine will have the entire keyspace, but will be missing
 	// indexes and scripts.
 	nm := &Machine{}
-	if err := nm.reopenBlankDB(rd); err != nil {
+	if err := nm.reopenBlankDB(rd, func(keys []string) { m.onExpired(keys) }); err != nil {
 		return err
 	}
 

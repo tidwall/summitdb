@@ -28,7 +28,7 @@ type Machine struct {
 
 func New(log finn.Logger, addr string) (*Machine, error) {
 	m := &Machine{log: log, addr: addr}
-	err := m.reopenBlankDB(nil)
+	err := m.reopenBlankDB(nil, func(keys []string) { m.onExpired(keys) })
 	if err != nil {
 		return nil, err
 	}
@@ -97,6 +97,7 @@ func (m *Machine) onExpired(keys []string) {
 	}()
 	if err != nil {
 		m.log.Warningf("expired: error: %v", err)
+		println(err.Error())
 	}
 }
 
@@ -113,7 +114,7 @@ func (m *Machine) ConnClosed(conn redcon.Conn, err error) {
 
 }
 
-func (m *Machine) reopenBlankDB(rd io.Reader) error {
+func (m *Machine) reopenBlankDB(rd io.Reader, onExpired func(keys []string)) error {
 	dir, err := ioutil.TempDir("", "summitdb")
 	if err != nil {
 		return err
@@ -139,7 +140,7 @@ func (m *Machine) reopenBlankDB(rd io.Reader) error {
 	if err := db.ReadConfig(&cfg); err != nil {
 		return err
 	}
-	cfg.OnExpired = func(keys []string) { m.onExpired(keys) }
+	cfg.OnExpired = func(keys []string) { onExpired(keys) }
 	if err := db.SetConfig(cfg); err != nil {
 		return err
 	}
