@@ -181,6 +181,8 @@ Here are a few commands for monitoring and managing the cluster:
 Adds a new member to the Raft cluster
 - **RAFTREMOVEPEER addr**  
 Removes an existing member
+- **RAFTPEERS addr**  
+Lists known peers and their status
 - **RAFTLEADER**  
 Returns the Raft leader, if known
 - **RAFTSNAPSHOT**  

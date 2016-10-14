@@ -12,7 +12,7 @@ else
 	if [ -d vendor/$1/.git ]; then
 		wd=`pwd`
 		cd vendor/$1
-		git clean -f
+		git clean -fd
 		cd "$wd"
 	fi
 	rm -rf vendor/$1/.git \

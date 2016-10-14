@@ -207,6 +207,7 @@ type Node struct {
 	level    Level
 	handler  Machine
 	store    bigStore
+	peers    map[string]string
 }
 
 // bigStore represents a raft store that conforms to
@@ -263,6 +264,7 @@ func Open(dir, addr, join string, handler Machine, opts *Options) (node *Node, e
 		opts:    opts,
 		level:   opts.Consistency,
 		handler: handler,
+		peers:   make(map[string]string),
 	}
 
 	var store bigStore
@@ -379,6 +381,7 @@ func Open(dir, addr, join string, handler Machine, opts *Options) (node *Node, e
 		}
 		break
 	}
+	go n.watchPeers()
 	return n, nil
 }
 
@@ -399,6 +402,68 @@ func (n *Node) Close() error {
 	}
 	n.closed = true
 	return nil
+}
+
+func (n *Node) watchPeers() {
+	buf := make([]byte, 1024)
+	for {
+		var peers []string
+		var err error
+		if !func() bool {
+			n.mu.Lock()
+			defer n.mu.Unlock()
+			if n.closed {
+				return false
+			}
+			peers, err = n.store.Peers()
+			return true
+		}() {
+			return
+		}
+
+		func() {
+			if err != nil {
+				return
+			}
+			peersState := make(map[string]string)
+			for _, peer := range peers {
+				state, err := func() (string, error) {
+					conn, err := net.DialTimeout("tcp", peer, time.Second)
+					if err != nil {
+						return "", err
+					}
+					defer conn.Close()
+					if err := conn.SetDeadline(time.Now().Add(time.Second)); err != nil {
+						return "", err
+					}
+					if _, err := conn.Write([]byte("RAFTSTATE\r\n")); err != nil {
+						return "", err
+					}
+					n, err := conn.Read(buf)
+					if err != nil {
+						return "", err
+					}
+					parts := strings.Split(string(buf[:n]), "\r\n")
+					if len(parts) != 3 || buf[0] != '$' {
+						return "", err
+					}
+					return parts[1], nil
+				}()
+				if err, ok := err.(net.Error); ok && err.Timeout() {
+					state = "Timeout"
+				} else if err != nil {
+					state = "Invalid"
+				}
+				peersState[peer] = state
+			}
+			n.mu.Lock()
+			if !n.closed {
+				n.peers = peersState
+			}
+			n.mu.Unlock()
+		}()
+		time.Sleep(time.Second)
+	}
 }
 
 // Log returns the active logger for printing messages
@@ -484,6 +549,8 @@ func (n *Node) doCommand(conn redcon.Conn, cmd redcon.Command) (interface{}, err
 		val, err = n.doRaftState(conn, cmd)
 	case "raftstats":
 		val, err = n.doRaftStats(conn, cmd)
+	case "raftpeers":
+		val, err = n.doRaftPeers(conn, cmd)
 	case "quit":
 		val, err = n.doQuit(conn, cmd)
 	case "ping":
@@ -597,6 +664,31 @@ func (n *Node) doRaftStats(conn redcon.Conn, cmd redcon.Command) (interface{}, e
 	for _, key := range keys {
 		conn.WriteBulkString(key)
 		conn.WriteBulkString(stats[key])
+	}
+	return nil, nil
+}
+
+// doRaftStatus handles a "RAFTSTATUS" client command.
+func (n *Node) doRaftPeers(conn redcon.Conn, cmd redcon.Command) (interface{}, error) {
+	if len(cmd.Args) != 1 {
+		return nil, ErrWrongNumberOfArguments
+	}
+	var peers []string
+	peersState := make(map[string]string)
+	func() {
+		n.mu.RLock()
+		defer n.mu.RUnlock()
+		for peer, state := range n.peers {
+			peersState[peer] = state
+			peers = append(peers, peer)
+		}
+	}()
+	sort.Strings(peers)
+
+	conn.WriteArray(len(peers) * 2)
+	for _, peer := range peers {
+		conn.WriteBulkString(peer)
+		conn.WriteBulkString(peersState[peer])
 	}
 	return nil, nil
 }
