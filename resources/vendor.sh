@@ -9,6 +9,12 @@ if [ "$1" == "" ]; then
 else
 	mkdir -p vendor/$1 
 	cp -rf ${GOPATH}/src/$1/ vendor/$1/
+	if [ -d vendor/$1/.git ]; then
+		wd=`pwd`
+		cd vendor/$1
+		git clean -f
+		cd "$wd"
+	fi
 	rm -rf vendor/$1/.git \
 		   vendor/$1/.bzr \
 		   vendor/$1/.hg \
