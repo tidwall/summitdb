@@ -4,6 +4,7 @@ import (
 	"errors"
 	"math"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/tidwall/buntdb"
@@ -14,6 +15,11 @@ import (
 func (m *Machine) doGet(a finn.Applier, conn redcon.Conn, cmd redcon.Command, tx *buntdb.Tx) (interface{}, error) {
 	// GET key
 	if len(cmd.Args) != 2 {
+		if len(cmd.Args) == 3 {
+			if string(cmd.Args[1]) == "/backup" && strings.HasPrefix(strings.ToLower(string(cmd.Args[2])), "http/") {
+				return m.doBackup(a, conn, cmd, tx)
+			}
+		}
 		return nil, finn.ErrWrongNumberOfArguments
 	}
 	if isMercMetaKeyBytes(cmd.Args[1]) {

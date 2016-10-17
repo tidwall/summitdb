@@ -8,21 +8,24 @@ SummitDB is an in-memory, [NoSQL](https://en.wikipedia.org/wiki/NoSQL) key/value
 
 Under the hood it utilizes [Finn](https://github.com/tidwall/finn), [Redcon](https://github.com/tidwall/redcon), [BuntDB](https://github.com/tidwall/buntdb), [GJSON](https://github.com/tidwall/gjson), and [Otto](https://github.com/robertkrimen/otto).
 
-## Features
+Features
+--------
 
 The goal was to create a fast data store that provides:
 
 - [In-memory with disk persistence](#in-memory-disk-persistence)
 - [Strong-consistency and durability](#consistency-and-durability)
 - High-availability
-- Simplified Redis-style APIs
 - Ordered key space
+- [Hot backups](#hot-backups)
+- [Simplified Redis-style APIs](#commands)
 - [Indexing on values](https://github.com/tidwall/summitdb/wiki/SETINDEX)
 - [JSON documents](#json-indexes)
 - [Spatial indexing](https://github.com/tidwall/summitdb/wiki/SETINDEX#spatial)
 - [Fencing tokens](#fencing-tokens)
 
-## Getting started
+Getting started
+---------------
 
 ### Building SummitDB
 
@@ -229,6 +232,40 @@ In a Raft cluster only the leader can apply commands. If a command is attempted 
 
 This means you should try the same command at the specified address.
 
+
+Hot Backups
+-----------
+
+SummitDB supports hot-backing up a node. 
+You can retreive and restore a snapshot of the database to a file using the [BACKUP](https://github.com/tidwall/summitdb/wiki/BACKUP) command.
+
+```
+> BACKUP
+BULK REPLY OF DATA
+```
+
+Or using an HTTP connection like such:
+
+```
+curl localhost:7481/backup -o backup.db
+```
+
+The backup file format is a series of commands which are stored as [RESP Arrays](http://redis.io/topics/protocol#resp-arrays).
+The command:
+```
+SET mykey 123
+```
+Is stored on disk as:
+```go
+"*3\r\n$3\r\nSET\r\n$5\r\nmykey\r\n$3\r\n123\r\n"
+```
+
+
+To restore a system from a backup, issue each command to the leader. For example, using the `nc` command you could execute:
+```sh
+$ cat backup.db | nc localhost 7481
+```
+
 Commands
 --------
 
@@ -246,6 +283,7 @@ Below is the complete list of commands and documentation for each.
 [EXISTS](https://github.com/tidwall/summitdb/wiki/EXISTS),
 [EXPIRE](https://github.com/tidwall/summitdb/wiki/EXPIRE),
 [EXPIREAT](https://github.com/tidwall/summitdb/wiki/EXPIREAT),
+[FENCE](https://github.com/tidwall/summitdb/wiki/FENCE),
 [FLUSHDB](https://github.com/tidwall/summitdb/wiki/FLUSHDB),
 [GET](https://github.com/tidwall/summitdb/wiki/GET), 
 [GETBIT](https://github.com/tidwall/summitdb/wiki/GETBIT), 
@@ -270,7 +308,6 @@ Below is the complete list of commands and documentation for each.
 [SETRANGE](https://github.com/tidwall/summitdb/wiki/SETRANGE), 
 [STRLEN](https://github.com/tidwall/summitdb/wiki/STRLEN),
 [TTL](https://github.com/tidwall/summitdb/wiki/TTL)
-
 
 **Indexes and iteration**  
 [DELINDEX](https://github.com/tidwall/summitdb/wiki/DELINDEX),
@@ -300,8 +337,8 @@ Below is the complete list of commands and documentation for each.
 [RAFTSTATE](https://github.com/tidwall/summitdb/wiki/RAFTSTATE),
 [RAFTSTATS](https://github.com/tidwall/summitdb/wiki/RAFTSTATS)
 
-**Fencing tokens**  
-[FENCE](https://github.com/tidwall/summitdb/wiki/FENCE)
+** Server **  
+[BACKUP](https://github.com/tidwall/summitdb/wiki/BACKUP)
 
 ## Contact
 Josh Baker [@tidwall](http://twitter.com/tidwall)

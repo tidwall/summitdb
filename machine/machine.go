@@ -24,10 +24,14 @@ type Machine struct {
 	mu   sync.RWMutex
 	db   *buntdb.DB
 	file string
+	dir  string
+
+	backupInProgress bool
+	backupLastErr    error
 }
 
-func New(log finn.Logger, addr string) (*Machine, error) {
-	m := &Machine{log: log, addr: addr}
+func New(log finn.Logger, addr, dir string) (*Machine, error) {
+	m := &Machine{log: log, addr: addr, dir: dir}
 	err := m.reopenBlankDB(nil, func(keys []string) { m.onExpired(keys) })
 	if err != nil {
 		return nil, err
@@ -113,7 +117,6 @@ func (m *Machine) ConnAccept(conn redcon.Conn) bool {
 func (m *Machine) ConnClosed(conn redcon.Conn, err error) {
 
 }
-
 func (m *Machine) reopenBlankDB(rd io.Reader, onExpired func(keys []string)) error {
 	dir, err := ioutil.TempDir("", "summitdb")
 	if err != nil {
@@ -382,5 +385,8 @@ func (m *Machine) doScriptableCommand(a finn.Applier, conn redcon.Conn, cmd redc
 	case "fence":
 		// FENCE token
 		return m.doFence(a, conn, cmd, tx)
+	case "backup":
+		// BACKUP [STATUS]
+		return m.doBackup(a, conn, cmd, tx)
 	}
 }
