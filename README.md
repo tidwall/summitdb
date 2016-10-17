@@ -237,7 +237,7 @@ Hot Backups
 -----------
 
 SummitDB supports hot-backing up a node. 
-You can retreive and restore a snapshot of the database to a file using the [BACKUP](https://github.com/tidwall/summitdb/wiki/BACKUP) command.
+You can retrieve and restore a snapshot of the database to a file using the [BACKUP](https://github.com/tidwall/summitdb/wiki/BACKUP) command.
 
 ```
 > BACKUP
@@ -337,7 +337,7 @@ Below is the complete list of commands and documentation for each.
 [RAFTSTATE](https://github.com/tidwall/summitdb/wiki/RAFTSTATE),
 [RAFTSTATS](https://github.com/tidwall/summitdb/wiki/RAFTSTATS)
 
-** Server **  
+**Server**  
 [BACKUP](https://github.com/tidwall/summitdb/wiki/BACKUP)
 
 ## Contact
