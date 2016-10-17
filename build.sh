@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-VERSION="0.2.1"
+VERSION="0.2.2"
 PROTECTED_MODE="no"
 
 export GO15VENDOREXPERIMENT=1
@@ -31,5 +31,5 @@ if [ "$NOCOPY" != "1" ]; then
 fi
 
 # build and store objects into original directory.
-go build -ldflags "-X main.version=0.2.1" -o "$OD/summitdb-server" cmd/summitdb-server/*.go
+go build -ldflags "-X main.version=$VERSION" -o "$OD/summitdb-server" cmd/summitdb-server/*.go
 

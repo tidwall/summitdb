@@ -97,7 +97,7 @@ func main() {
 	log.Printf("SummitDB %s", version)
 
 	// create the new machine
-	m, err := machine.New(log.Sub('M'), addr, dir)
+	m, err := machine.New(log.Sub('M'), addr)
 	if err != nil {
 		log.Warningf("%v", err)
 		os.Exit(1)

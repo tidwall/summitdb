@@ -22,9 +22,6 @@ func (m *Machine) doGet(a finn.Applier, conn redcon.Conn, cmd redcon.Command, tx
 		}
 		return nil, finn.ErrWrongNumberOfArguments
 	}
-	if isMercMetaKeyBytes(cmd.Args[1]) {
-		return nil, errKeyNotAllowed
-	}
 	return m.readDoApply(a, conn, cmd, tx, func(tx *buntdb.Tx) error {
 		val, err := tx.Get(string(cmd.Args[1]))
 		if err != nil {
@@ -44,9 +41,6 @@ func (m *Machine) doStrlen(a finn.Applier, conn redcon.Conn, cmd redcon.Command,
 	if len(cmd.Args) != 2 {
 		return nil, finn.ErrWrongNumberOfArguments
 	}
-	if isMercMetaKeyBytes(cmd.Args[1]) {
-		return nil, errKeyNotAllowed
-	}
 	return m.readDoApply(a, conn, cmd, tx, func(tx *buntdb.Tx) error {
 		val, err := tx.Get(string(cmd.Args[1]))
 		if err != nil && err != buntdb.ErrNotFound {
@@ -64,12 +58,7 @@ func (m *Machine) doSet(a finn.Applier, conn redcon.Conn, cmd redcon.Command, tx
 	if len(cmd.Args) < 3 {
 		return nil, finn.ErrWrongNumberOfArguments
 	}
-	if isMercMetaKeyBytes(cmd.Args[1]) {
-		return nil, errKeyNotAllowed
-	}
-
 	commandName := qcmdlower(cmd.Args[0])
-
 	if len(cmd.Args) == 3 && commandName == "set" {
 		// fasttrack
 		return m.writeDoApply(a, conn, cmd, tx, func(tx *buntdb.Tx) (interface{}, error) {
@@ -186,11 +175,6 @@ func (m *Machine) doMset(a finn.Applier, conn redcon.Conn, cmd redcon.Command, t
 		return nil, finn.ErrWrongNumberOfArguments
 	}
 	pipeline := qcmdlower(cmd.Args[0]) == "plset"
-	for i := 1; i < len(cmd.Args); i += 2 {
-		if isMercMetaKeyBytes(cmd.Args[i]) {
-			return nil, errKeyNotAllowed
-		}
-	}
 	return m.writeDoApply(a, conn, cmd, tx, func(tx *buntdb.Tx) (interface{}, error) {
 		for i := 1; i < len(cmd.Args); i += 2 {
 			_, _, err := tx.Set(string(cmd.Args[i]), string(cmd.Args[i+1]), nil)
@@ -215,11 +199,6 @@ func (m *Machine) doMsetnx(a finn.Applier, conn redcon.Conn, cmd redcon.Command,
 	// MSETNX key value [key value ...]
 	if len(cmd.Args) < 3 || (len(cmd.Args)-1)%2 == 1 {
 		return nil, finn.ErrWrongNumberOfArguments
-	}
-	for i := 1; i < len(cmd.Args); i += 2 {
-		if isMercMetaKeyBytes(cmd.Args[i]) {
-			return nil, errKeyNotAllowed
-		}
 	}
 	return m.writeDoApply(a, conn, cmd, tx, func(tx *buntdb.Tx) (interface{}, error) {
 		for i := 1; i < len(cmd.Args); i += 2 {
@@ -249,11 +228,6 @@ func (m *Machine) doMget(a finn.Applier, conn redcon.Conn, cmd redcon.Command, t
 		return nil, finn.ErrWrongNumberOfArguments
 	}
 	pipeline := qcmdlower(cmd.Args[0]) == "plget"
-	for i := 1; i < len(cmd.Args); i++ {
-		if isMercMetaKeyBytes(cmd.Args[i]) {
-			return nil, errKeyNotAllowed
-		}
-	}
 	return m.readDoApply(a, conn, cmd, tx, func(tx *buntdb.Tx) error {
 		vals := make([]*string, 0, len(cmd.Args)-1)
 		for i := 1; i < len(cmd.Args); i++ {
@@ -284,9 +258,6 @@ func (m *Machine) doAppend(a finn.Applier, conn redcon.Conn, cmd redcon.Command,
 	// APPEND key value
 	if len(cmd.Args) != 3 {
 		return nil, finn.ErrWrongNumberOfArguments
-	}
-	if isMercMetaKeyBytes(cmd.Args[1]) {
-		return nil, errKeyNotAllowed
 	}
 	key := string(cmd.Args[1])
 	return m.writeDoApply(a, conn, cmd, tx, func(tx *buntdb.Tx) (interface{}, error) {
@@ -335,9 +306,6 @@ func (m *Machine) doIncr(a finn.Applier, conn redcon.Conn, cmd redcon.Command, t
 			amt = +n
 		}
 	}
-	if isMercMetaKeyBytes(cmd.Args[1]) {
-		return nil, errKeyNotAllowed
-	}
 	key := string(cmd.Args[1])
 	return m.writeDoApply(a, conn, cmd, tx, func(tx *buntdb.Tx) (interface{}, error) {
 		val, err := tx.Get(key)
@@ -372,9 +340,6 @@ func (m *Machine) doIncrbyfloat(a finn.Applier, conn redcon.Conn, cmd redcon.Com
 	if err != nil {
 		return nil, errors.New("ERR value is not a valid float")
 	}
-	if isMercMetaKeyBytes(cmd.Args[1]) {
-		return nil, errKeyNotAllowed
-	}
 	key := string(cmd.Args[1])
 	return m.writeDoApply(a, conn, cmd, tx, func(tx *buntdb.Tx) (interface{}, error) {
 		val, err := tx.Get(key)
@@ -407,9 +372,6 @@ func (m *Machine) doGetset(a finn.Applier, conn redcon.Conn, cmd redcon.Command,
 	// GETSET key value
 	if len(cmd.Args) != 3 {
 		return nil, finn.ErrWrongNumberOfArguments
-	}
-	if isMercMetaKeyBytes(cmd.Args[1]) {
-		return nil, errKeyNotAllowed
 	}
 	key := string(cmd.Args[1])
 	return m.writeDoApply(a, conn, cmd, tx, func(tx *buntdb.Tx) (interface{}, error) {
@@ -489,9 +451,6 @@ func (m *Machine) doGetrange(a finn.Applier, conn redcon.Conn, cmd redcon.Comman
 	if err != nil {
 		return nil, err
 	}
-	if isMercMetaKeyBytes(cmd.Args[1]) {
-		return nil, errKeyNotAllowed
-	}
 	return m.readDoApply(a, conn, cmd, tx, func(tx *buntdb.Tx) error {
 		val, err := tx.Get(string(cmd.Args[1]))
 		if err != nil && err != buntdb.ErrNotFound {
@@ -514,9 +473,6 @@ func (m *Machine) doSetrange(a finn.Applier, conn redcon.Conn, cmd redcon.Comman
 		return nil, errors.New("ERR offset is out of range")
 	}
 	offset := int(n)
-	if isMercMetaKeyBytes(cmd.Args[1]) {
-		return nil, errKeyNotAllowed
-	}
 	key := string(cmd.Args[1])
 	return m.writeDoApply(a, conn, cmd, tx, func(tx *buntdb.Tx) (interface{}, error) {
 		val, err := tx.Get(key)
@@ -556,9 +512,6 @@ func (m *Machine) doBitcount(a finn.Applier, conn redcon.Conn, cmd redcon.Comman
 			return nil, err
 		}
 		rng = true
-	}
-	if isMercMetaKeyBytes(cmd.Args[1]) {
-		return nil, errKeyNotAllowed
 	}
 	return m.readDoApply(a, conn, cmd, tx, func(tx *buntdb.Tx) error {
 		val, err := tx.Get(string(cmd.Args[1]))
@@ -607,11 +560,6 @@ func (m *Machine) doBitop(a finn.Applier, conn redcon.Conn, cmd redcon.Command, 
 		op = opNot
 		if len(cmd.Args) > 4 {
 			return nil, errors.New("ERR BITOP NOT must be called with a single source key.")
-		}
-	}
-	for i := 2; i < len(cmd.Args); i++ {
-		if isMercMetaKeyBytes(cmd.Args[i]) {
-			return nil, errKeyNotAllowed
 		}
 	}
 	return m.writeDoApply(a, conn, cmd, tx, func(tx *buntdb.Tx) (interface{}, error) {
@@ -682,9 +630,6 @@ func (m *Machine) doGetbit(a finn.Applier, conn redcon.Conn, cmd redcon.Command,
 	if err != nil {
 		return nil, errors.New("ERR bit offset is not an integer or out of range")
 	}
-	if isMercMetaKeyBytes(cmd.Args[1]) {
-		return nil, errKeyNotAllowed
-	}
 	return m.readDoApply(a, conn, cmd, tx, func(tx *buntdb.Tx) error {
 		val, err := tx.Get(string(cmd.Args[1]))
 		if err != nil && err != buntdb.ErrNotFound {
@@ -712,9 +657,6 @@ func (m *Machine) doSetbit(a finn.Applier, conn redcon.Conn, cmd redcon.Command,
 	bit, err := strconv.ParseUint(string(cmd.Args[3]), 10, 64)
 	if err != nil || bit > 1 {
 		return nil, errors.New("ERR bit is not an integer or out of range")
-	}
-	if isMercMetaKeyBytes(cmd.Args[1]) {
-		return nil, errKeyNotAllowed
 	}
 	return m.writeDoApply(a, conn, cmd, tx, func(tx *buntdb.Tx) (interface{}, error) {
 		val, err := tx.Get(string(cmd.Args[1]))
@@ -763,9 +705,6 @@ func (m *Machine) doBitpos(a finn.Applier, conn redcon.Conn, cmd redcon.Command,
 		if err != nil {
 			return nil, err
 		}
-	}
-	if isMercMetaKeyBytes(cmd.Args[1]) {
-		return nil, errKeyNotAllowed
 	}
 	return m.readDoApply(a, conn, cmd, tx, func(tx *buntdb.Tx) error {
 		val, err := tx.Get(string(cmd.Args[1]))

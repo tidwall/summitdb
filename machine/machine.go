@@ -24,14 +24,10 @@ type Machine struct {
 	mu   sync.RWMutex
 	db   *buntdb.DB
 	file string
-	dir  string
-
-	backupInProgress bool
-	backupLastErr    error
 }
 
-func New(log finn.Logger, addr, dir string) (*Machine, error) {
-	m := &Machine{log: log, addr: addr, dir: dir}
+func New(log finn.Logger, addr string) (*Machine, error) {
+	m := &Machine{log: log, addr: addr}
 	err := m.reopenBlankDB(nil, func(keys []string) { m.onExpired(keys) })
 	if err != nil {
 		return nil, err

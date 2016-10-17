@@ -16,9 +16,6 @@ func (m *Machine) doType(a finn.Applier, conn redcon.Conn, cmd redcon.Command, t
 	if len(cmd.Args) != 2 {
 		return nil, finn.ErrWrongNumberOfArguments
 	}
-	if isMercMetaKeyBytes(cmd.Args[1]) {
-		return nil, errKeyNotAllowed
-	}
 	return m.readDoApply(a, conn, cmd, tx, func(tx *buntdb.Tx) error {
 		_, err := tx.Get(string(cmd.Args[1]))
 		if err != nil {
@@ -150,11 +147,6 @@ func (m *Machine) doExists(a finn.Applier, conn redcon.Conn, cmd redcon.Command,
 	if len(cmd.Args) < 2 {
 		return nil, finn.ErrWrongNumberOfArguments
 	}
-	for i := 1; i < len(cmd.Args); i++ {
-		if isMercMetaKeyBytes(cmd.Args[i]) {
-			return nil, errKeyNotAllowed
-		}
-	}
 	return m.readDoApply(a, conn, cmd, tx, func(tx *buntdb.Tx) error {
 		var n int
 		for i := 1; i < len(cmd.Args); i++ {
@@ -178,9 +170,6 @@ func (m *Machine) doRename(a finn.Applier, conn redcon.Conn, cmd redcon.Command,
 		return nil, finn.ErrWrongNumberOfArguments
 	}
 	nx := qcmdlower(cmd.Args[0]) == "renamenx"
-	if isMercMetaKeyBytes(cmd.Args[1]) || isMercMetaKeyBytes(cmd.Args[2]) {
-		return nil, errKeyNotAllowed
-	}
 	key := string(cmd.Args[1])
 	newkey := string(cmd.Args[2])
 	return m.writeDoApply(a, conn, cmd, tx, func(tx *buntdb.Tx) (interface{}, error) {
@@ -221,9 +210,6 @@ func (m *Machine) doRename(a finn.Applier, conn redcon.Conn, cmd redcon.Command,
 func (m *Machine) doPersist(a finn.Applier, conn redcon.Conn, cmd redcon.Command, tx *buntdb.Tx) (interface{}, error) {
 	if len(cmd.Args) != 2 {
 		return nil, finn.ErrWrongNumberOfArguments
-	}
-	if isMercMetaKeyBytes(cmd.Args[1]) {
-		return nil, errKeyNotAllowed
 	}
 	key := string(cmd.Args[1])
 	return m.writeDoApply(a, conn, cmd, tx, func(tx *buntdb.Tx) (interface{}, error) {
@@ -268,9 +254,6 @@ func (m *Machine) doTTL(a finn.Applier, conn redcon.Conn, cmd redcon.Command, tx
 		resolution = time.Second
 	case "pttl":
 		resolution = time.Millisecond
-	}
-	if isMercMetaKeyBytes(cmd.Args[1]) {
-		return nil, errKeyNotAllowed
 	}
 	key := string(cmd.Args[1])
 	return m.readDoApply(a, conn, cmd, tx, func(tx *buntdb.Tx) error {
@@ -317,9 +300,6 @@ func (m *Machine) doExpire(a finn.Applier, conn redcon.Conn, cmd redcon.Command,
 	case "pexpireat":
 		ttl = time.Unix(0, int64(time.Millisecond*time.Duration(n))).Sub(time.Now())
 	}
-	if isMercMetaKeyBytes(cmd.Args[1]) {
-		return nil, errKeyNotAllowed
-	}
 	key := string(cmd.Args[1])
 	return m.writeDoApply(a, conn, cmd, tx, func(tx *buntdb.Tx) (interface{}, error) {
 		val, err := tx.Get(key)
@@ -347,11 +327,6 @@ func (m *Machine) doDel(a finn.Applier, conn redcon.Conn, cmd redcon.Command, tx
 	// DEL key [key ...]
 	if len(cmd.Args) < 2 {
 		return nil, finn.ErrWrongNumberOfArguments
-	}
-	for i := 1; i < len(cmd.Args); i++ {
-		if isMercMetaKeyBytes(cmd.Args[i]) {
-			return nil, errKeyNotAllowed
-		}
 	}
 	return m.writeDoApply(a, conn, cmd, tx, func(tx *buntdb.Tx) (interface{}, error) {
 		var n int
