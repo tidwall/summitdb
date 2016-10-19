@@ -30,6 +30,36 @@ if [ "$NOCOPY" != "1" ]; then
 	cd $WD
 fi
 
+package(){
+	echo Packaging $1 Binary
+	bdir=summitdb-${VERSION}-$2-$3
+	rm -rf packages/$bdir && mkdir -p packages/$bdir
+	GOOS=$2 GOARCH=$3 ./build.sh
+	if [ "$2" == "windows" ]; then
+		mv summitdb-server packages/$bdir/summitdb-server.exe
+	else
+		mv summitdb-server packages/$bdir
+	fi
+	cp README.md packages/$bdir
+	cd packages
+	if [ "$2" == "linux" ]; then
+		tar -zcf $bdir.tar.gz $bdir
+	else
+		zip -r -q $bdir.zip $bdir
+	fi
+	rm -rf $bdir
+	cd ..
+}
+
+if [ "$1" == "package" ]; then
+	rm -rf packages/
+	package "Windows" "windows" "amd64"
+	package "Mac" "darwin" "amd64"
+	package "Linux" "linux" "amd64"
+	package "FreeBSD" "freebsd" "amd64"
+	exit
+fi
+
 # build and store objects into original directory.
 go build -ldflags "-X main.version=$VERSION" -o "$OD/summitdb-server" cmd/summitdb-server/*.go
 
