@@ -4,7 +4,7 @@
     width="350" height="85" border="0" alt="SummitDB">
 </p>
 
-SummitDB is an in-memory, [NoSQL](https://en.wikipedia.org/wiki/NoSQL) key/value database. It persists to disk, uses the [Raft](https://raft.github.io/) consensus algorithm, is [ACID](https://en.wikipedia.org/wiki/ACID) compliant, and built on a transactional and strongly-consistent model. It supports [custom indexes](https://github.com/tidwall/summitdb/wiki/SETINDEX), [geospatial data](https://github.com/tidwall/summitdb/wiki/SETINDEX#spatial), [JSON documents](https://github.com/tidwall/summitdb/wiki/SETINDEX#json), and [user-defined JS scripting](https://github.com/tidwall/summitdb/wiki/EVAL).
+SummitDB is an in-memory, [NoSQL](https://en.wikipedia.org/wiki/NoSQL) key/value database. It persists to disk, uses the [Raft](https://raft.github.io/) consensus algorithm, is [ACID](https://en.wikipedia.org/wiki/ACID) compliant, and built on a transactional and strongly-consistent model. It supports [custom indexes](https://github.com/tidwall/summitdb/wiki/SETINDEX), [geospatial data](https://github.com/tidwall/summitdb/wiki/SETINDEX#spatial), [JSON documents](#json-documents), and [user-defined JS scripting](https://github.com/tidwall/summitdb/wiki/EVAL).
 
 Under the hood it utilizes [Finn](https://github.com/tidwall/finn), [Redcon](https://github.com/tidwall/redcon), [BuntDB](https://github.com/tidwall/buntdb), [GJSON](https://github.com/tidwall/gjson), and [Otto](https://github.com/robertkrimen/otto).
 
