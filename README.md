@@ -20,7 +20,7 @@ The goal was to create a fast data store that provides:
 - [Hot backups](#hot-backups)
 - [Simplified Redis-style APIs](#commands)
 - [Indexing on values](https://github.com/tidwall/summitdb/wiki/SETINDEX)
-- [JSON documents](#json-indexes)
+- [JSON documents](#json-documents)
 - [Spatial indexing](https://github.com/tidwall/summitdb/wiki/SETINDEX#spatial)
 - [Fencing tokens](#fencing-tokens)
 
@@ -103,6 +103,51 @@ SummitDB store all data in memory. Yet each writable command is appended to a fi
 
 This is similar to [Redis AOF persistence](http://redis.io/topics/persistence).
 
+## JSON Documents
+
+SummitDB provides the commands
+[JSET](https://github.com/tidwall/summitdb/wiki/JSET),
+[JGET](https://github.com/tidwall/summitdb/wiki/JGET),
+[JDEL](https://github.com/tidwall/summitdb/wiki/JDEL)
+for working with json documents.
+
+`JSET` and `JDEL` uses the 
+[sjson path syntax](https://github.com/tidwall/sjson#path-syntax) 
+and `JGET` uses the 
+[gjson path syntax](https://github.com/tidwall/gjson#path-syntax).
+
+Here are some examples:
+
+```
+> JSET user:101 name Tom
+OK
+> JSET user:101 age 46
+OK
+> GET user:101
+"{\"age\":46,\"name\":\"Tom\"}"
+> JGET user:101 age
+"46"
+> JSET user:101 name.first Tom
+OK
+> JSET user:101 name.last Anderson
+OK
+> GET user:101
+"{\"age\":46,\"name\":{\"last\":\"Anderson\",\"first\":\"Tom\"}}"
+> JDEL user:101 name.last
+(integer) 1
+> GET user:101
+"{\"age\":46,\"name\":{\"first\":\"Tom\"}}"
+> JSET user:101 friends.0 Carol
+OK
+> JSET user:101 friends.1 Andy
+OK
+> JSET user:101 friends.3 Frank
+OK
+> GET user:101
+"{\"friends\":[\"Carol\",\"Andy\",null,\"Frank\"],\"age\":46,\"name\":{\"first\":\"Tom\"}}"
+> JGET user:101 friends.1
+"Andy"
+```
 
 ## JSON Indexes
 
@@ -279,7 +324,7 @@ $ cat backup.db | nc localhost 7481
 Commands
 --------
 
-Below is the complete list of commands and documentation for each.
+Below is the complete list of commands.
 
 **Keys and values**  
 [APPEND](https://github.com/tidwall/summitdb/wiki/APPEND), 
@@ -318,6 +363,11 @@ Below is the complete list of commands and documentation for each.
 [SETRANGE](https://github.com/tidwall/summitdb/wiki/SETRANGE), 
 [STRLEN](https://github.com/tidwall/summitdb/wiki/STRLEN),
 [TTL](https://github.com/tidwall/summitdb/wiki/TTL)
+
+**JSON**
+[JSET](https://github.com/tidwall/summitdb/wiki/JSET),
+[JGET](https://github.com/tidwall/summitdb/wiki/JGET),
+[JDEL](https://github.com/tidwall/summitdb/wiki/JDEL)
 
 **Indexes and iteration**  
 [DELINDEX](https://github.com/tidwall/summitdb/wiki/DELINDEX),

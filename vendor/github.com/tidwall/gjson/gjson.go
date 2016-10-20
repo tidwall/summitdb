@@ -27,6 +27,26 @@ const (
 	JSON
 )
 
+// String returns a string representation of the type.
+func (t Type) String() string {
+	switch t {
+	default:
+		return ""
+	case Null:
+		return "Null"
+	case False:
+		return "False"
+	case Number:
+		return "Number"
+	case String:
+		return "String"
+	case True:
+		return "True"
+	case JSON:
+		return "JSON"
+	}
+}
+
 // Result represents a json value that is returned from Get().
 type Result struct {
 	// Type is the json type
@@ -37,6 +57,8 @@ type Result struct {
 	Str string
 	// Num is the json number
 	Num float64
+	// Index of raw value in original json, zero means index unknown
+	Index int
 }
 
 // String returns a string representation of the value.
@@ -387,7 +409,13 @@ func tostr(json string) (raw string, str string) {
 					break
 				}
 			}
-			return json[:i+1], unescape(json[1:i])
+			var ret string
+			if i+1 < len(json) {
+				ret = json[:i+1]
+			} else {
+				ret = json[:i]
+			}
+			return ret, unescape(json[1:i])
 		}
 	}
 	return json, json[1:]
@@ -1129,6 +1157,14 @@ func Get(json, path string) Result {
 			i++
 			parseArray(c, i, path)
 			break
+		}
+	}
+	if len(c.value.Raw) > 0 {
+		jhdr := *(*reflect.StringHeader)(unsafe.Pointer(&json))
+		rhdr := *(*reflect.StringHeader)(unsafe.Pointer(&(c.value.Raw)))
+		c.value.Index = int(rhdr.Data - jhdr.Data)
+		if c.value.Index < 0 || c.value.Index >= len(json) {
+			c.value.Index = 0
 		}
 	}
 	return c.value

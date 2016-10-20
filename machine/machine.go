@@ -384,5 +384,15 @@ func (m *Machine) doScriptableCommand(a finn.Applier, conn redcon.Conn, cmd redc
 	case "backup":
 		// BACKUP [STATUS]
 		return m.doBackup(a, conn, cmd, tx)
+
+	case "jget":
+		// JGET key path
+		return m.doJget(a, conn, cmd, tx)
+	case "jset":
+		// JSET key path value [RAW|STR]
+		return m.doJset(a, conn, cmd, tx)
+	case "jdel":
+		// JDEL key path
+		return m.doJdel(a, conn, cmd, tx)
 	}
 }
