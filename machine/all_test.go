@@ -41,6 +41,7 @@ func TestAll(t *testing.T) {
 	defer mc.Close()
 	runSubTest(t, "strings", mc, subTestStrings)
 	runSubTest(t, "keys", mc, subTestKeys)
+	runSubTest(t, "json", mc, subTestJSON)
 	runSubTest(t, "indexes", mc, subTestIndexes)
 	runSubTest(t, "transactions", mc, subTestTransactions)
 	runSubTest(t, "scripts", mc, subTestScripts)
