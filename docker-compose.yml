@@ -1,0 +1,27 @@
+version: '2'
+services:
+  server:
+    build: .
+    working_dir: /go/src/github.com/tidwall/summitdb
+    command: go run cmd/summitdb-server/main.go
+    ports:
+      - "7481:7481"
+    volumes:
+      - .:/go/src/github.com/tidwall/summitdb
+  cli:
+    build: .
+    working_dir: /go/src/github.com/tidwall/summitdb
+    command: go run cmd/summitdb-cli/main.go -h server -p 7481
+    volumes:
+      - .:/go/src/github.com/tidwall/summitdb
+    links:
+      - server
+  build-image:
+    build: .
+    working_dir: /go/src/github.com/tidwall/summitdb
+    command: bash ./prod.sh
+    environment:
+      RELEASE: ${RELEASE}
+    volumes:
+      - .:/go/src/github.com/tidwall/summitdb
+      - /var/run/docker.sock:/var/run/docker.sock
