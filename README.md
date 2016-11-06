@@ -34,6 +34,10 @@ Instructions for using these binaries are on the GitHub [releases page](https://
 
 If you want to try the latest version, you can build SummitDB from the master branch.
 
+
+If your using docker you can get the specific version of summitdb like this,
+`docker pull pyros2097/summitdb:0.2.2`
+
 ### Building SummitDB
 
 SummitDB can be compiled and used on Linux, OSX, Windows, FreeBSD, and probably others since the codebase is 100% Go. We support both 32 bit and 64 bit systems. Go must be installed on the build machine.
@@ -55,6 +59,12 @@ To run tests:
 ````
 $ make test
 ```
+
+To build the docker image:
+```
+$ RELEASE=0.2.2 docker-compose run build-image
+```
+
 
 
 
@@ -84,6 +94,11 @@ $ ./summitdb-server -p 7483 -dir data3 -join :7481
 ```
 
 That's it. Now if node1 goes down, node2 and node3 will continue to operate.
+
+
+To Run it using docker use this command,
+
+`docker run -v /tmp:/tmp -p 7481:7481 pyros2097/summitdb:0.2.2`
 
 ## Difference between SummitDB and Redis
 

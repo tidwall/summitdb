@@ -14,6 +14,5 @@ COPY zoneinfo.zip /usr/lib/go/lib/time/zoneinfo.zip
 COPY prj /
 ENTRYPOINT ["/prj"]
 EOL
-image_name=${PWD##*/}
 cd /build
-docker build -t tidwall/summitdb:$RELEASE .
+docker build -t pyros2097/summitdb:$RELEASE .
