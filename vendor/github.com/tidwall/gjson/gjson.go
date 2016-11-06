@@ -108,6 +108,21 @@ func (t Result) Int() int64 {
 	}
 }
 
+// Uint returns an unsigned integer representation.
+func (t Result) Uint() uint64 {
+	switch t.Type {
+	default:
+		return 0
+	case True:
+		return 1
+	case String:
+		n, _ := strconv.ParseUint(t.Str, 10, 64)
+		return n
+	case Number:
+		return uint64(t.Num)
+	}
+}
+
 // Float returns an float64 representation.
 func (t Result) Float() float64 {
 	switch t.Type {
@@ -123,16 +138,21 @@ func (t Result) Float() float64 {
 	}
 }
 
-// Array returns back an array of children. The result must be a JSON array.
+// Array returns back an array of values.
+// If the result represents a non-existent value, then an empty array will be returned.
+// If the result is not a JSON array, the return value will be an array containing one result.
 func (t Result) Array() []Result {
-	if t.Type != JSON {
+	if !t.Exists() {
 		return nil
+	}
+	if t.Type != JSON {
+		return []Result{t}
 	}
 	r := t.arrayOrMap('[', false)
 	return r.a
 }
 
-//  Map returns back an map of children. The result should be a JSON array.
+// Map returns back an map of values. The result should be a JSON array.
 func (t Result) Map() map[string]Result {
 	if t.Type != JSON {
 		return map[string]Result{}
@@ -1138,11 +1158,12 @@ type parseContext struct {
 //  }
 //  "name.last"          >> "Anderson"
 //  "age"                >> 37
+//  "children"           >> ["Sara","Alex","Jack"]
 //  "children.#"         >> 3
 //  "children.1"         >> "Alex"
 //  "child*.2"           >> "Jack"
 //  "c?ildren.0"         >> "Sara"
-//  "friends.#.first"    >> [ "James", "Roger" ]
+//  "friends.#.first"    >> ["James","Roger"]
 //
 func Get(json, path string) Result {
 	var i int

@@ -13,6 +13,8 @@
 
 GJSON is a Go package the provides a [very fast](#performance) and simple way to get a value from a json document. The reason for this library it to give efficient json indexing for the [BuntDB](https://github.com/tidwall/buntdb) project. 
 
+For a command line interface check out [JSONed](https://github.com/tidwall/jsoned).
+
 Getting Started
 ===============
 
@@ -27,7 +29,7 @@ $ go get -u github.com/tidwall/gjson
 This will retrieve the library.
 
 ## Get a value
-Get searches json for the specified path. A path is in dot syntax, such as "name.last" or "age". This function expects that the json is well-formed and validates. Invalid json will not panic, but it may return back unexpected results. When the value is found it's returned immediately.
+Get searches json for the specified path. A path is in dot syntax, such as "name.last" or "age". This function expects that the json is well-formed and validates. Invalid json will not panic, but it may return back unexpected results. When the value is found it's returned immediately. 
 
 ```go
 package main
@@ -47,6 +49,9 @@ This will print:
 ```
 Prichard
 ```
+
+*There's also the [GetBytes](#working-with-bytes) function for working with JSON byte slices.*
+
 
 ## Path Syntax
 
@@ -71,12 +76,13 @@ The dot and wildcard characters can be escaped with '\'.
 ```
 "name.last"          >> "Anderson"
 "age"                >> 37
+"children"           >> ["Sara","Alex","Jack"]
 "children.#"         >> 3
 "children.1"         >> "Alex"
 "child*.2"           >> "Jack"
 "c?ildren.0"         >> "Sara"
 "fav\.movie"         >> "Deer Hunter"
-"friends.#.first"    >> [ "James", "Roger" ]
+"friends.#.first"    >> ["James","Roger"]
 "friends.1.last"     >> "Craig"
 ```
 To query an array:
@@ -105,7 +111,6 @@ result.Type    // can be String, Number, True, False, Null, or JSON
 result.Str     // holds the string
 result.Num     // holds the float64 number
 result.Raw     // holds the raw json
-result.Multi   // holds nested array values
 result.Index   // index of raw value in original json, zero means index unknown
 ```
 
@@ -114,6 +119,7 @@ There are a variety of handy functions that work on a result:
 ```go
 result.Value() interface{}
 result.Int() int64
+result.Uint() uint64
 result.Float() float64
 result.String() string
 result.Bool() bool
@@ -123,6 +129,12 @@ result.Get(path string) Result
 ```
 
 The `result.Value()` function returns an `interface{}` which requires type assertion and is one of the following Go types:
+
+
+
+The `result.Array()` funtion returns back an array of values.
+If the result represents a non-existent value, then an empty array will be returned.
+If the result is not a JSON array, the return value will be an array containing one result.
 
 ```go
 boolean >> bool
@@ -185,7 +197,7 @@ gjson.Get(json, "name.last")
 
 ## Check for the existence of a value
 
-Sometimes you just want to know you if a value exists.
+Sometimes you just want to know if a value exists. 
 
 ```go
 value := gjson.Get(json, "name.last")
@@ -211,6 +223,16 @@ if !ok{
 	// not a map
 }
 ```
+
+## Working with Bytes
+
+If your JSON is contained in a `[]byte` slice, there's the [GetBytes](https://godoc.org/github.com/tidwall/gjson#GetBytes) function. This is preferred over `Get(string(data), path)`.
+
+```go
+var data []byte = ...
+res := gjson.GetBytes(data, path)
+```
+
 
 ## Performance
 

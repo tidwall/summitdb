@@ -1,5 +1,5 @@
 all: 
-	@./build.sh
+	@resources/build.sh
 clean:
 	@rm -f summitdb-server
 	@rm -rf redis-3.2.4
@@ -20,4 +20,4 @@ redis-cli:
 	cd .. && \
 	rm -rf redis-3.2.4
 package:
-	@NOCOPY=1 ./build.sh package
+	@NOCOPY=1 resources/build.sh package

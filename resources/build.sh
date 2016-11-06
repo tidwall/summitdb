@@ -6,7 +6,7 @@ PROTECTED_MODE="no"
 
 export GO15VENDOREXPERIMENT=1
 
-cd $(dirname "${BASH_SOURCE[0]}")
+cd $(dirname "${BASH_SOURCE[0]}")/../  
 OD="$(pwd)"
 
 # temp directory for storing isolated environment.
@@ -34,13 +34,13 @@ package(){
 	echo Packaging $1 Binary
 	bdir=summitdb-${VERSION}-$2-$3
 	rm -rf packages/$bdir && mkdir -p packages/$bdir
-	GOOS=$2 GOARCH=$3 ./build.sh
+	GOOS=$2 GOARCH=$3 ${BASH_SOURCE[0]} # ./build.sh
 	if [ "$2" == "windows" ]; then
 		mv summitdb-server packages/$bdir/summitdb-server.exe
 	else
 		mv summitdb-server packages/$bdir
 	fi
-	cp README.md packages/$bdir
+	cp README.md LICENSE CHANGELOG.md packages/$bdir
 	cd packages
 	if [ "$2" == "linux" ]; then
 		tar -zcf $bdir.tar.gz $bdir
