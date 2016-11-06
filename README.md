@@ -10,9 +10,6 @@ Under the hood it utilizes [Finn](https://github.com/tidwall/finn), [Redcon](htt
 
 Features
 --------
-
-The goal was to create a fast data store that provides:
-
 - [In-memory with disk persistence](#in-memory-disk-persistence)
 - [Strong-consistency and durability](#consistency-and-durability)
 - [High-availability](#consistency-and-durability)
