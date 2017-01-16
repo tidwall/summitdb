@@ -83,6 +83,27 @@ func (m *Machine) doFence(a finn.Applier, conn redcon.Conn, cmd redcon.Command, 
 	})
 }
 
+func (m *Machine) doFenceGet(a finn.Applier, conn redcon.Conn, cmd redcon.Command, tx *buntdb.Tx) (interface{}, error) {
+	// FENCEGET token
+	if len(cmd.Args) != 2 {
+		return nil, finn.ErrWrongNumberOfArguments
+	}
+	key := sdbMetaPrefix + "fence:" + string(cmd.Args[1])
+	return m.readDoApply(a, conn, cmd, tx, func(tx *buntdb.Tx) error {
+		val, err := tx.Get(key)
+		switch err {
+		case nil:
+			conn.WriteBulkString(val)
+			return nil
+		case buntdb.ErrNotFound:
+			conn.WriteBulkString("0")
+			return nil
+		default:
+			return err
+		}
+	})
+}
+
 type backupWriter struct {
 	conn redcon.DetachedConn
 }

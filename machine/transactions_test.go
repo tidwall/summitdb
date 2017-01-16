@@ -164,9 +164,13 @@ func transactions_GET_test(mc *mockCluster) error {
 
 func transactions_FENCE_test(mc *mockCluster) error {
 	return mc.DoBatch([][]interface{}{
+		{"FENCEGET", "mytoken1"}, {"0"},
+		{"FENCEGET", "mytoken2"}, {"0"},
 		{"FENCE", "mytoken1"}, {"1"},
 		{"FENCE", "mytoken1"}, {"2"},
+		{"FENCEGET", "mytoken1"}, {"2"},
 		{"FENCE", "mytoken1"}, {"3"},
+		{"FENCEGET", "mytoken1"}, {"3"},
 		{"FENCE", "mytoken1"}, {"4"},
 		{"FENCE", "mytoken1"}, {"5"},
 		{"FENCE", "mytoken2"}, {"1"},
@@ -174,14 +178,19 @@ func transactions_FENCE_test(mc *mockCluster) error {
 		{"FENCE", "mytoken2"}, {"3"},
 		{"FENCE", "mytoken2"}, {"4"},
 		{"FENCE", "mytoken2"}, {"5"},
+		{"FENCEGET", "mytoken2"}, {"5"},
 	})
 	return mc.DoBatch([][]interface{}{
+		{"FENCEGET", "mytoken1"}, {"5"},
+		{"FENCEGET", "mytoken2"}, {"5"},
 		{"FENCE", "mytoken1"}, {"6"},
 		{"FENCE", "mytoken1"}, {"7"},
 		{"FENCE", "mytoken1"}, {"8"},
 		{"FENCE", "mytoken1"}, {"9"},
+		{"FENCEGET", "mytoken1"}, {"9"},
 		{"FENCE", "mytoken1"}, {"10"},
 		{"FENCE", "mytoken2"}, {"6"},
+		{"FENCEGET", "mytoken2"}, {"6"},
 		{"FENCE", "mytoken2"}, {"7"},
 		{"FENCE", "mytoken2"}, {"8"},
 		{"FENCE", "mytoken2"}, {"9"},
