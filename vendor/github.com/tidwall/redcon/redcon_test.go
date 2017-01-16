@@ -7,6 +7,7 @@ import (
 	"log"
 	"math/rand"
 	"net"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -207,9 +208,17 @@ func testDetached(t *testing.T, conn DetachedConn) {
 		t.Fatal(err)
 	}
 }
+func TestServerTCP(t *testing.T) {
+	testServerNetwork(t, "tcp", ":12345")
+}
+func TestServerUnix(t *testing.T) {
+	os.RemoveAll("/tmp/redcon-unix.sock")
+	defer os.RemoveAll("/tmp/redcon-unix.sock")
+	testServerNetwork(t, "unix", "/tmp/redcon-unix.sock")
+}
 
-func TestServer(t *testing.T) {
-	s := NewServer(":12345",
+func testServerNetwork(t *testing.T, network, laddr string) {
+	s := NewServerNetwork(network, laddr,
 		func(conn Conn, cmd Command) {
 			switch strings.ToLower(string(cmd.Args[0])) {
 			default:
@@ -250,7 +259,7 @@ func TestServer(t *testing.T) {
 	}
 	go func() {
 		time.Sleep(time.Second / 4)
-		if err := ListenAndServe(":12345", func(conn Conn, cmd Command) {}, nil, nil); err == nil {
+		if err := ListenAndServeNetwork(network, laddr, func(conn Conn, cmd Command) {}, nil, nil); err == nil {
 			t.Fatalf("expected an error, should not be able to listen on the same port")
 		}
 		time.Sleep(time.Second / 4)
@@ -274,7 +283,7 @@ func TestServer(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		c, err := net.Dial("tcp", ":12345")
+		c, err := net.Dial(network, laddr)
 		if err != nil {
 			t.Fatal(err)
 		}
