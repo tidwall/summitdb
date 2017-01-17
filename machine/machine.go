@@ -381,6 +381,9 @@ func (m *Machine) doScriptableCommand(a finn.Applier, conn redcon.Conn, cmd redc
 	case "fence":
 		// FENCE token
 		return m.doFence(a, conn, cmd, tx)
+	case "fenceget":
+		// FENCEGET token
+		return m.doFenceGet(a, conn, cmd, tx)
 	case "backup":
 		// BACKUP [STATUS]
 		return m.doBackup(a, conn, cmd, tx)

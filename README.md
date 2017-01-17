@@ -215,7 +215,7 @@ Fencing Tokens
 A fencing token is simply a number that increases. 
 It's guaranteed to be consistent across the cluster and can never be deleted or decreased. 
 The value is a 64-bit unsigned integer. The first FENCE call will return "1".
-This can be useful in applications that need things like distributed locking and preventing race conditions.
+This can be useful in applications that need things like distributed locking and preventing race conditions. FENCEGET will read the token without incrementing it.
 
 ```
 > FENCE mytoken
@@ -224,6 +224,10 @@ This can be useful in applications that need things like distributed locking and
 "2"
 > FENCE mytoken
 "3"
+> FENCEGET mytoken
+"3"
+> FENCE mytoken
+"4"
 ```
 
 
@@ -336,6 +340,7 @@ Below is the complete list of commands.
 [EXPIRE](https://github.com/tidwall/summitdb/wiki/EXPIRE),
 [EXPIREAT](https://github.com/tidwall/summitdb/wiki/EXPIREAT),
 [FENCE](https://github.com/tidwall/summitdb/wiki/FENCE),
+[FENCEGET](https://github.com/tidwall/summitdb/wiki/FENCEGET),
 [FLUSHDB](https://github.com/tidwall/summitdb/wiki/FLUSHDB),
 [GET](https://github.com/tidwall/summitdb/wiki/GET), 
 [GETBIT](https://github.com/tidwall/summitdb/wiki/GETBIT), 
