@@ -64,6 +64,9 @@ func (m *Machine) doFence(a finn.Applier, conn redcon.Conn, cmd redcon.Command, 
 		if err != nil {
 			return nil, err
 		}
+		if incr < 1 {
+			return nil, fmt.Errorf("length argument to FENCE must be > 0")
+		}
 	}
 	key := sdbMetaPrefix + "fence:" + string(cmd.Args[1])
 	return m.writeDoApply(a, conn, cmd, tx, func(tx *buntdb.Tx) (interface{}, error) {
