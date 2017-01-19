@@ -52,9 +52,18 @@ func (m *Machine) doDbsize(a finn.Applier, conn redcon.Conn, cmd redcon.Command,
 }
 
 func (m *Machine) doFence(a finn.Applier, conn redcon.Conn, cmd redcon.Command, tx *buntdb.Tx) (interface{}, error) {
-	// FENCE token
-	if len(cmd.Args) != 2 {
+	// FENCE token {optional length}
+	narg := len(cmd.Args)
+	if narg != 2 && narg != 3 {
 		return nil, finn.ErrWrongNumberOfArguments
+	}
+	var incr uint64 = 1
+	if narg == 3 {
+		var err error
+		incr, err = strconv.ParseUint(string(cmd.Args[2]), 10, 64)
+		if err != nil {
+			return nil, err
+		}
 	}
 	key := sdbMetaPrefix + "fence:" + string(cmd.Args[1])
 	return m.writeDoApply(a, conn, cmd, tx, func(tx *buntdb.Tx) (interface{}, error) {
@@ -70,7 +79,7 @@ func (m *Machine) doFence(a finn.Applier, conn redcon.Conn, cmd redcon.Command, 
 				return nil, err
 			}
 		}
-		n++
+		n += incr
 		val = strconv.FormatUint(n, 10)
 		_, _, err = tx.Set(key, val, nil)
 		if err != nil {
