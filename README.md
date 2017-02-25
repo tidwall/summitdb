@@ -257,7 +257,7 @@ Consistency and Durability
 SummitDB is tuned by design for strong consistency and durability. A server shutdown, power event, or `kill -9` will not corrupt the state of the cluster or lose data. 
 
 All data persists to disk. SummitDB uses an append-only file format that stores for each command in exact order of execution. 
-Each command consists of a one write and one fync. This provides excellent durability.
+Each command consists of a one write and one fsync. This provides excellent durability.
 
 ### Read Consistency
 
