@@ -76,8 +76,8 @@ $ ./redis-cli -p 7481 GET mykey
 
 Adding members:
 ```
-$ ./summitdb-server -p 7482 -dir data2 -join :7481
-$ ./summitdb-server -p 7483 -dir data3 -join :7481
+$ ./summitdb-server -p 7482 -dir data2 -join localhost:7481
+$ ./summitdb-server -p 7483 -dir data3 -join localhost:7481
 ```
 
 That's it. Now if node1 goes down, node2 and node3 will continue to operate.
