@@ -17,6 +17,7 @@ var version = "0.0.1"
 
 func main() {
 	var port int
+	var host string
 	var durability string
 	var consistency string
 	var loglevel string
@@ -25,6 +26,7 @@ func main() {
 	var high, medium, low bool
 
 	flag.IntVar(&port, "p", 7481, "Bind port")
+	flag.StringVar(&host, "h", "localhost", "Bind host")
 	flag.StringVar(&durability, "durability", "high", "Log durability [low,medium,high]")
 	flag.StringVar(&consistency, "consistency", "high", "Raft consistency [low,medium,high]")
 	flag.StringVar(&loglevel, "loglevel", "notice", "Log level [quiet,warning,notice,verbose,debug]")
@@ -89,7 +91,7 @@ func main() {
 		opts.LogLevel = finn.Debug
 	}
 
-	addr := fmt.Sprintf(":%d", port)
+	addr := fmt.Sprintf("%s:%d", host, port)
 
 	// set the log level
 	log.SetLevel(int(opts.LogLevel))
