@@ -49,7 +49,7 @@ $ make redis-cli
 
 To run tests:
 
-````
+```
 $ make test
 ```
 
