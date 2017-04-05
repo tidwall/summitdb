@@ -33,7 +33,7 @@ If you want to try the latest version, you can build SummitDB from the master br
 
 ### Building SummitDB
 
-SummitDB can be compiled and used on Linux, OSX, Windows, FreeBSD, and probably others since the codebase is 100% Go. We support both 32 bit and 64 bit systems. Go must be installed on the build machine.
+SummitDB can be compiled and used on Linux, OSX, Windows, FreeBSD, ARM (Raspberry PI) and probably others since the codebase is 100% Go. We support both 32 bit and 64 bit systems. Go must be installed on the build machine.
 
 To build simply:
 
