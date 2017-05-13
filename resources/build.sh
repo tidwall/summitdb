@@ -56,6 +56,7 @@ if [ "$1" == "package" ]; then
 	package "Windows" "windows" "amd64"
 	package "Mac" "darwin" "amd64"
 	package "Linux" "linux" "amd64"
+	package "ARM" "linux" "arm"
 	package "FreeBSD" "freebsd" "amd64"
 	exit
 fi
