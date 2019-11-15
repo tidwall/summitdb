@@ -53,8 +53,9 @@ To run tests:
 $ make test
 ```
 
+## Docker
 
-
+Check out the SummitDB images in [Docker Hub](https://hub.docker.com/search?q=summitdb&type=image).
 
 ### Running
 
